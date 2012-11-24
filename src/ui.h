@@ -24,12 +24,18 @@
 #ifndef __STREDIT_UI_H__
 #define __STREDIT_UI_H__
 
+#include "backend.h"
+
 #include <string>
 #include <boost/format.hpp>
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #       include <wx/wx.h>
 #endif
+#include <wx/listctrl.h>
+#include <wx/filepicker.h>
+#include <wx/srchctrl.h>
+
 
 //UI helper functions.
 namespace stredit {
@@ -46,7 +52,7 @@ enum {
     LIST_Strings,
     TEXT_Original,
     TEXT_New
-}
+};
 
 class StrEditApp : public wxApp {
 public:
@@ -60,7 +66,8 @@ public:
     void OnOpenFile(wxCommandEvent& event);
     void OnSaveFile(wxCommandEvent& event);
     void OnSaveFileAs(wxCommandEvent& event);
-    void OnQuit(wxCloseEvent& event);
+    void OnQuit(wxCommandEvent& event);
+    void OnClose(wxCloseEvent& event);
     void OnViewReadme(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
 
@@ -73,6 +80,8 @@ private:
     wxTextCtrl * originalTextBox;
     wxTextCtrl * newTextBox;
 
+    std::list<stredit::str_data> strList;
+
     DECLARE_EVENT_TABLE()
 };
 
@@ -81,9 +90,9 @@ public:
     OpenDialog();
     void OnQuit(wxCommandEvent& event);
 private:
-    wxFilePicker * oldOriginalPicker;
-    wxFilePicker * newOriginalPicker;
-    wxFilePicker * targetPicker;
+    wxFilePickerCtrl * oldOriginalPicker;
+    wxFilePickerCtrl * newOriginalPicker;
+    wxFilePickerCtrl * targetPicker;
 };
 
 #endif

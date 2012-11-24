@@ -34,7 +34,7 @@ namespace stredit {
         uint32_t ret;
         strings_handle sh;
         string_data * strings;
-        size_t numStrings;
+        size_t numStrings = 0;
 
         ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
 
@@ -101,20 +101,17 @@ namespace stredit {
     void TwoStringMatching(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
                            const boost::unordered_map<uint32_t, std::string>& targetStrMap,
                            std::list<str_data>& stringList) {
-
         stringList.clear();
-        for (boost::unordered_map<uint32_t, std::string>::iterator it=originalStrMap.begin(), endIt=originalStrMap.end(); it != endIt; ++it) {
+        for (boost::unordered_map<uint32_t, std::string>::const_iterator it=originalStrMap.begin(), endIt=originalStrMap.end(); it != endIt; ++it) {
             str_data data;
             data.id = it->first;
             data.oldString = it->second;
-            boost::unordered_map<uint32_t, std::string>::iterator itr = targetStrMap.find(it->first);
+            boost::unordered_map<uint32_t, std::string>::const_iterator itr = targetStrMap.find(it->first);
             if (itr != targetStrMap.end()) {
                 data.newString = itr->second;
             }
-            stringList.insert(data);
+            stringList.push_back(data);
         }
-
-        return stringList;
     }
 
     //Updates the IDs of stringList elements by matching their oldStrings to the strings of map1.
@@ -124,7 +121,7 @@ namespace stredit {
                          std::list<str_data>& stringList) {
         for (std::list<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
             int leastLDist = -1;
-            for (boost::unordered_map<uint32_t, std::string>::const_iterator itr=originalStrMap.begin(), endItr=originalStrMap.end(); itr != endItr; ++itr) {
+            for (boost::unordered_map<uint32_t, std::string>::const_iterator itr=oldOrigStrMap.begin(), endItr=oldOrigStrMap.end(); itr != endItr; ++itr) {
                 if (itr->second == it->oldString) {
                     it->id = itr->first;
                     break;
@@ -133,8 +130,8 @@ namespace stredit {
                     //Get the Levenshtein distance of the two strings, compare
                     //to the previously-obtained distance (if exists). If smaller,
                     //store the current string.
-                    int lDist = Levenshtein(it->oldString, it->second);
-                    if (leastLDist == -1 || leastLDist > lDist)
+                    int lDist = Levenshtein(it->oldString, itr->second);
+                    if (leastLDist == -1 || leastLDist > lDist) {
                         it->id = itr->first;
                         it->lDist = lDist;
                         leastLDist = lDist;
@@ -145,7 +142,7 @@ namespace stredit {
     }
 
     //Explicit memory management, need to call delete on the output when finished with it.
-    ToUint8_tString(std::string str) {
+    uint8_t * ToUint8_tString(std::string str) {
         size_t length = str.length() + 1;
         uint8_t * p = new uint8_t[length];
 
@@ -162,7 +159,7 @@ namespace stredit {
             str_data data;
             data.id = it->first;
             data.oldString = it->second;
-            stringList.insert(data);
+            stringList.push_back(data);
         }
     }
 

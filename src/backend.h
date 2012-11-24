@@ -41,7 +41,7 @@ namespace stredit {
     };
 
     //Some global constants.
-    const std::string readme_path = "Docs/readme.html"
+    const std::string readme_path = "Docs/readme.html";
     const std::string version_string = "0.1.0";
     const std::string prog_filename = "StrEdit.exe";
 
@@ -66,6 +66,8 @@ namespace stredit {
     uint8_t * ToUint8_tString(std::string str);
     void ToStringList(const boost::unordered_map<uint32_t, std::string>& stringMap, std::list<str_data>& stringList);
     void ToStringMap(const std::list<str_data>& stringList, boost::unordered_map<uint32_t, std::string>& stringMap);
+
+    int Levenshtein(const std::string first, const std::string second);
 }
 
 #endif
