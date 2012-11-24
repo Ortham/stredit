@@ -59,28 +59,40 @@ public:
     bool OnInit();
 };
 
+class VirtualList : public wxListCtrl {
+public:
+    VirtualList(wxWindow * parent, wxWindowID id);
+
+    std::vector<stredit::str_data> internalData;
+protected:
+    wxString OnGetItemText(long item, long column) const;
+    wxListItemAttr * OnGetItemAttr(long item) const;
+    wxListItemAttr * attr;
+private:
+};
+
 //Main window class.
 class MainFrame : public wxFrame {
 public:
     MainFrame(const wxChar *title);
     void OnOpenFile(wxCommandEvent& event);
     void OnSaveFile(wxCommandEvent& event);
-    void OnSaveFileAs(wxCommandEvent& event);
     void OnQuit(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
     void OnViewReadme(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
 
     void OnStringSelect(wxListEvent& event);
+    void OnStringDeselect(wxListEvent& event);
     void OnStringFilter(wxCommandEvent& event);
     void OnStringFilterCancel(wxCommandEvent& event);
 private:
-    wxListCtrl * stringList;
+    VirtualList * stringList;
     wxSearchCtrl * searchBox;  //Could be used for filtering the string list.
     wxTextCtrl * originalTextBox;
     wxTextCtrl * newTextBox;
 
-    std::list<stredit::str_data> strList;
+    std::string filePath;
 
     DECLARE_EVENT_TABLE()
 };

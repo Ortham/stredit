@@ -54,8 +54,35 @@ namespace stredit {
         CloseStringsFile(sh);
     }
 
+    void GetStrings(const std::string path, std::vector<str_data>& stringList) {
+        uint32_t ret;
+        strings_handle sh;
+        string_data * strings;
+        size_t numStrings = 0;
+
+        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
+
+        if (ret != LIBSTRINGS_OK)
+            throw runtime_error("Could not open strings file.");
+
+        ret = GetStrings(sh, &strings, &numStrings);
+
+        if (ret != LIBSTRINGS_OK)
+            throw runtime_error("Could not read strings file.");
+
+        stringList.clear();
+        for (size_t i=0; i < numStrings; ++i) {
+            str_data data;
+            data.id = strings[i].id;
+            data.oldString = string(reinterpret_cast<const char *>(strings[i].data));
+            stringList.push_back(data);
+        }
+
+        CloseStringsFile(sh);
+    }
+
     //String file writing.
-    void SetStrings(const std::string path, const boost::unordered_map<uint32_t, std::string>& stringMap) {
+    void SetStrings(const std::string path, const std::vector<str_data>& stringList) {
         uint32_t ret;
         strings_handle sh;
         string_data * strings;
@@ -67,13 +94,16 @@ namespace stredit {
             throw runtime_error("Could not open strings file.");
 
         //Create string_data array.
-        numStrings = stringMap.size();
+        numStrings = stringList.size();
         strings = new string_data[numStrings];
         size_t i = 0;
-        for (boost::unordered_map<uint32_t, std::string>::const_iterator it=stringMap.begin(), endIt=stringMap.end(); it != endIt; ++it) {
+        for (std::vector<str_data>::const_iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
             string_data data;
-            data.id = it->first;
-            data.data = ToUint8_tString(it->second);
+            data.id = it->id;
+            if (it->newString.empty())
+                data.data = ToUint8_tString(it->oldString);
+            else
+                data.data = ToUint8_tString(it->newString);
             strings[i] = data;
             ++i;
         }
@@ -100,7 +130,7 @@ namespace stredit {
     //result. The lDist for all matches is 0, as only exact matching is used.
     void TwoStringMatching(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
                            const boost::unordered_map<uint32_t, std::string>& targetStrMap,
-                           std::list<str_data>& stringList) {
+                           std::vector<str_data>& stringList) {
         stringList.clear();
         for (boost::unordered_map<uint32_t, std::string>::const_iterator it=originalStrMap.begin(), endIt=originalStrMap.end(); it != endIt; ++it) {
             str_data data;
@@ -118,8 +148,8 @@ namespace stredit {
     //If an exact match cannot be found, then Levenstein matching is used and the lDist
     //updated to reflect the distance of the chosen match.
     void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& oldOrigStrMap,
-                         std::list<str_data>& stringList) {
-        for (std::list<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
+                         std::vector<str_data>& stringList) {
+        for (std::vector<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
             int leastLDist = -1;
             for (boost::unordered_map<uint32_t, std::string>::const_iterator itr=oldOrigStrMap.begin(), endItr=oldOrigStrMap.end(); itr != endItr; ++itr) {
                 if (itr->second == it->oldString) {
@@ -142,7 +172,7 @@ namespace stredit {
     }
 
     //Explicit memory management, need to call delete on the output when finished with it.
-    uint8_t * ToUint8_tString(std::string str) {
+    uint8_t * ToUint8_tString(const std::string str) {
         size_t length = str.length() + 1;
         uint8_t * p = new uint8_t[length];
 
@@ -151,28 +181,6 @@ namespace stredit {
         }
         p[length - 1] = '\0';
         return p;
-    }
-
-    void ToStringList(const boost::unordered_map<uint32_t, std::string>& stringMap, std::list<str_data>& stringList) {
-        stringList.clear();
-        for (boost::unordered_map<uint32_t, std::string>::const_iterator it=stringMap.begin(), endIt=stringMap.end(); it != endIt; ++it) {
-            str_data data;
-            data.id = it->first;
-            data.oldString = it->second;
-            stringList.push_back(data);
-        }
-    }
-
-    void ToStringMap(const std::list<str_data>& stringList, boost::unordered_map<uint32_t, std::string>& stringMap) {
-        stringMap.clear();
-        for (std::list<str_data>::const_iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
-            string str;
-            if (it->newString.empty())
-                str = it->oldString;
-            else
-                str = it->newString;
-            stringMap.insert(pair<uint32_t, string>(it->id, str));
-        }
     }
 
     int Levenshtein(const std::string first, const std::string second) {
@@ -190,5 +198,12 @@ namespace stredit {
 
         //It gets complicated - look for a library to use.
         return 0;
+    }
+
+    bool compare_old_new(const str_data first, const str_data second) {
+        if (first.newString.empty() && second.newString.empty())
+            return first.oldString < second.oldString;
+        else
+            return first.newString < second.newString;
     }
 }

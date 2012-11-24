@@ -26,18 +26,19 @@
 
 #include <stdint.h>
 #include <string>
-#include <list>
+#include <vector>
 #include <boost/unordered_map.hpp>
 
 namespace stredit {
     //Structure for holding string data.
     struct str_data {
-        str_data() : lDist(0), id(0) {}
+        str_data() : lDist(0), id(0), edited(false) {}
 
         unsigned int lDist;  //For when using Levenstein matching.
         uint32_t id;
         std::string oldString;
         std::string newString;
+        bool edited;
     };
 
     //Some global constants.
@@ -48,26 +49,27 @@ namespace stredit {
     //String file reading/writing. These could be replaced by a more optimised
     //per-string editing system once everything is working.
     void GetStrings(const std::string path,       boost::unordered_map<uint32_t, std::string>& stringMap);
-    void SetStrings(const std::string path, const boost::unordered_map<uint32_t, std::string>& stringMap);
+    void GetStrings(const std::string path,       std::vector<str_data>& stringList);
+    void SetStrings(const std::string path, const std::vector<str_data>& stringList);
 
     //Matches the strings of map1 and map2 up using their IDs, and outputs the
     //result. The lDist for all matches is 0, as only exact matching is used.
     void TwoStringMatching(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
                            const boost::unordered_map<uint32_t, std::string>& targetStrMap,
-                           std::list<str_data>& stringList);
+                           std::vector<str_data>& stringList);
 
     //Updates the IDs of stringList elements by matching their oldStrings to the strings of map1.
     //If an exact match cannot be found, then Levenshtein matching is used and the lDist
     //updated to reflect the distance of the chosen match.
     void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& oldOrigStrMap,
-                         std::list<str_data>& stringList);
+                         std::vector<str_data>& stringList);
 
-    //Some helper conversion functions.
-    uint8_t * ToUint8_tString(std::string str);
-    void ToStringList(const boost::unordered_map<uint32_t, std::string>& stringMap, std::list<str_data>& stringList);
-    void ToStringMap(const std::list<str_data>& stringList, boost::unordered_map<uint32_t, std::string>& stringMap);
+    //Some helper functions.
+    uint8_t * ToUint8_tString(const std::string str);
 
     int Levenshtein(const std::string first, const std::string second);
+
+    bool compare_old_new(const str_data first, const str_data second);
 }
 
 #endif

@@ -24,6 +24,7 @@
 #include "ui.h"
 
 #include <stdexcept>
+#include <algorithm>
 #include <boost/locale.hpp>
 #include <boost/filesystem.hpp>
 #include <wx/aboutdlg.h>
@@ -33,12 +34,13 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
 
     EVT_MENU ( wxID_OPEN , MainFrame::OnOpenFile )
     EVT_MENU ( wxID_SAVE , MainFrame::OnSaveFile )
-    EVT_MENU ( wxID_SAVEAS , MainFrame::OnSaveFileAs )
+    EVT_MENU ( wxID_SAVEAS , MainFrame::OnSaveFile )
     EVT_MENU ( wxID_EXIT , MainFrame::OnQuit )
     EVT_MENU ( wxID_HELP , MainFrame::OnViewReadme )
     EVT_MENU ( wxID_ABOUT , MainFrame::OnAbout )
 
     EVT_LIST_ITEM_SELECTED ( LIST_Strings , MainFrame::OnStringSelect)
+    EVT_LIST_ITEM_DESELECTED ( LIST_Strings , MainFrame::OnStringDeselect)
 
     EVT_SEARCHCTRL_SEARCH_BTN ( SEARCH_Strings , MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_CANCEL_BTN ( SEARCH_Strings , MainFrame::OnStringFilterCancel )
@@ -78,6 +80,32 @@ bool StrEditApp::OnInit() {
     return true;
 }
 
+VirtualList::VirtualList(wxWindow * parent, wxWindowID id) : wxListCtrl(parent, id, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL) {
+    attr = new wxListItemAttr();
+}
+
+wxString VirtualList::OnGetItemText(long item, long column) const {
+    if (column == 0) {
+        if (internalData[item].lDist == 0)
+            return "";
+        else
+            return wxString::Format(wxT("%i"), internalData[item].lDist);
+    } else if (column == 1)
+        return wxString::Format(wxT("%i"), internalData[item].id);
+    else if (column == 2)
+        return FromUTF8(internalData[item].oldString);
+    else
+        return FromUTF8(internalData[item].newString);
+}
+
+wxListItemAttr * VirtualList::OnGetItemAttr(long item) const {
+    if (internalData[item].edited)
+        attr->SetTextColour(*wxRED);
+    else
+        attr->SetTextColour(*wxBLACK);
+    return attr;
+}
+
 MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize) {
     //Set up menu bar first.
     wxMenuBar * MenuBar = new wxMenuBar();
@@ -100,15 +128,34 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
 
     searchBox = new wxSearchCtrl(this, SEARCH_Strings, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 
-    stringList = new wxListCtrl(this, LIST_Strings, wxDefaultPosition, wxDefaultSize, wxLC_REPORT);
+    stringList = new VirtualList(this, LIST_Strings);
     stringList->InsertColumn(0, translate("Lev. Dist."));
     stringList->InsertColumn(1, translate("ID"));
     stringList->InsertColumn(2, translate("Original String"));
     stringList->InsertColumn(3, translate("New String"));
 
-    boost::unordered_map<uint32_t, std::string> strMap;
+    originalTextBox = new wxTextCtrl(this, TEXT_Original, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+    newTextBox = new wxTextCtrl(this, TEXT_New, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+
+    //Contents in one big resizing box.
+    wxBoxSizer *bigBox = new wxBoxSizer(wxVERTICAL);
+
+    bigBox->Add(searchBox, 0, wxEXPAND|wxLEFT|wxTOP|wxRIGHT, 5);
+    bigBox->Add(stringList, 1, wxEXPAND|wxLEFT|wxRIGHT, 5);
+    bigBox->Add(originalTextBox, 0, wxEXPAND|wxALL, 5);
+    bigBox->Add(newTextBox, 0, wxEXPAND|wxLEFT|wxBOTTOM|wxRIGHT, 5);
+
+    //Now set the layout and sizes.
+    SetSizerAndFit(bigBox);
+}
+
+void MainFrame::OnOpenFile(wxCommandEvent& event) {
+    //Display the OpenDialog, then get the strings from the picked files and
+    //fill the string list with them.
+
+    std::vector<str_data> strList;
     try {
-        GetStrings("Skyrim_English.STRINGS", strMap);
+        GetStrings("Skyrim_English.STRINGS", strList);
     } catch (runtime_error& e) {
         wxMessageBox(
             FromUTF8(e.what()),
@@ -116,9 +163,12 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
             wxOK | wxICON_ERROR,
             this);
     }
-    ToStringList(strMap, strList);
+    //A progress dialog for the above loading would be good.
+    sort(strList.begin(), strList.end(), compare_old_new);
+    stringList->SetItemCount(strList.size());
+    stringList->internalData = strList;
     int i = 0;
-    for (std::list<str_data>::const_iterator it=strList.begin(), endIt=strList.end(); it != endIt; ++it) {
+/*    for (std::vector<str_data>::const_iterator it=strList.begin(), endIt=strList.end(); it != endIt; ++it) {
         wxListItem item;
         item.SetId(i);
         item.SetText(it->oldString);
@@ -133,34 +183,32 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
         stringList->SetItem(i, 3, FromUTF8(it->newString));
 
         ++i;
-    }
-
-    originalTextBox = new wxTextCtrl(this, TEXT_Original, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
-    newTextBox = new wxTextCtrl(this, TEXT_New, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
-
-    //Contents in one big resizing box.
-    wxBoxSizer *bigBox = new wxBoxSizer(wxVERTICAL);
-
-    bigBox->Add(searchBox, 0, wxEXPAND);
-    bigBox->Add(stringList, 1, wxEXPAND|wxALL, 5);
-    bigBox->Add(originalTextBox, 0, wxEXPAND|wxALL, 5);
-    bigBox->Add(newTextBox, 0, wxEXPAND|wxALL, 5);
-
-    //Now set the layout and sizes.
-    SetSizerAndFit(bigBox);
-}
-
-void MainFrame::OnOpenFile(wxCommandEvent& event) {
-    //Display the OpenDialog, then get the strings from the picked files and
-    //fill the string list with them.
+    }*/
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {
+    if (event.GetId() == wxID_SAVE && !filePath.empty())
+        SetStrings(filePath, stringList->internalData);
+    else {
+        //Display file picker dialog.
+        wxFileDialog saveFileDialog(this, _("Save As..."), wxEmptyString, wxEmptyString,
+            "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS",
+            wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 
-}
+        if (saveFileDialog.ShowModal() == wxID_CANCEL)
+            return;
 
-void MainFrame::OnSaveFileAs(wxCommandEvent& event) {
-
+        filePath = saveFileDialog.GetPath().ToUTF8();
+        try {
+            SetStrings(filePath, stringList->internalData);
+        } catch (runtime_error& e) {
+            wxMessageBox(
+                FromUTF8(e.what()),
+                translate("StrEdit: Error"),
+                wxOK | wxICON_ERROR,
+                this);
+        }
+    }
 }
 
 void MainFrame::OnQuit(wxCommandEvent& event) {
@@ -209,24 +257,24 @@ void MainFrame::OnAbout(wxCommandEvent& event) {
 
 
 void MainFrame::OnStringSelect(wxListEvent& event) {
-    //Apply edits to previous newString (if exists), then load the selected strings.
-    wxString orgStr;
-    wxString newStr;
-    wxListItem info;
+    //Load the selected strings.
+    str_data data = stringList->internalData[event.GetIndex()];
 
-    info.m_itemId = event.m_itemIndex;
-    info.m_col = 2;
-    info.m_mask = wxLIST_MASK_TEXT;
+    originalTextBox->SetValue(FromUTF8(data.oldString));
+    newTextBox->SetValue(FromUTF8(data.newString));
+}
 
-    stringList->GetItem(info);
-    orgStr = info.m_text;
+void MainFrame::OnStringDeselect(wxListEvent& event) {
+    //Apply the text in the newTextBox to the fourth column of the string list.
+    //If the new text does not match the old text, set its colour to red.
+    wxString currStr = stringList->internalData[event.GetIndex()].newString;
+    wxString newStr = newTextBox->GetValue();
 
-    info.m_col = 3;
-    stringList->GetItem(info);
-    newStr = info.m_text;
-
-    originalTextBox->SetValue(orgStr);
-    newTextBox->SetValue(newStr);
+    if (currStr != newStr) {
+        stringList->internalData[event.GetIndex()].newString = newStr.ToUTF8();
+        stringList->internalData[event.GetIndex()].edited = true;
+        stringList->SetItem(event.GetIndex(), 3, newStr);
+    }
 }
 
 void MainFrame::OnStringFilter(wxCommandEvent& event) {
