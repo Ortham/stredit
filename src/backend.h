@@ -26,13 +26,15 @@
 
 #include <stdint.h>
 #include <string>
-#include <map>
 #include <list>
+#include <boost/unordered_map.hpp>
 
 namespace stredit {
     //Structure for holding string data.
-    struct string_data {
-        int matchProb;  //For when using Levenstein matching.
+    struct str_data {
+        str_data() : lDist(0), id(0) {}
+
+        unsigned int lDist;  //For when using Levenstein matching.
         uint32_t id;
         std::string oldString;
         std::string newString;
@@ -43,18 +45,27 @@ namespace stredit {
     const std::string version_string = "0.1.0";
     const std::string prog_filename = "StrEdit.exe";
 
-    //String file reading/writing.
-    std::map<uint32_t, std::string> GetStrings(const std::string path);
-    void SetStrings(const std::string path, const std::map<uint32_t, std::string>& strings);
+    //String file reading/writing. These could be replaced by a more optimised
+    //per-string editing system once everything is working.
+    void GetStrings(const std::string path,       boost::unordered_map<uint32_t, std::string>& stringMap);
+    void SetStrings(const std::string path, const boost::unordered_map<uint32_t, std::string>& stringMap);
 
     //Matches the strings of map1 and map2 up using their IDs, and outputs the
-    //result. The matchProb for all matches is 100, as only exact matching is used.
-    std::list<string_data> TwoStringMatching(const std::map<uint32_t, std::string>& map1, const std::map<uint32_t, std::string>& map2);
+    //result. The lDist for all matches is 0, as only exact matching is used.
+    void TwoStringMatching(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
+                           const boost::unordered_map<uint32_t, std::string>& targetStrMap,
+                           std::list<str_data>& stringList);
 
     //Updates the IDs of stringList elements by matching their oldStrings to the strings of map1.
-    //If an exact match cannot be found, then Levenstein matching is used and the matchProb
-    //updated to reflect the probability of a correct match.
-    void UpdateStringIDs(std::list<string_data>& stringList, const std::map<uint32_t, std::string>& map1);
+    //If an exact match cannot be found, then Levenshtein matching is used and the lDist
+    //updated to reflect the distance of the chosen match.
+    void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& oldOrigStrMap,
+                         std::list<str_data>& stringList);
+
+    //Some helper conversion functions.
+    uint8_t * ToUint8_tString(std::string str);
+    void ToStringList(const boost::unordered_map<uint32_t, std::string>& stringMap, std::list<str_data>& stringList);
+    void ToStringMap(const std::list<str_data>& stringList, boost::unordered_map<uint32_t, std::string>& stringMap);
 }
 
 #endif

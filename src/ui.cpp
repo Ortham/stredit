@@ -77,7 +77,7 @@ bool StrEditApp::OnInit() {
     return true;
 }
 
-MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxMINIMIZE_BOX|wxSYSTEM_MENU|wxCAPTION|wxCLOSE_BOX|wxCLIP_CHILDREN) {
+MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize) {
     //Set up menu bar first.
     wxMenuBar * MenuBar = new wxMenuBar();
     // File Menu
