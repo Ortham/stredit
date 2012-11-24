@@ -1,0 +1,89 @@
+/*  StrEdit
+
+    A STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators.
+
+    Copyright (C) 2012    WrinklyNinja
+
+    This file is part of StrEdit.
+
+    StrEdit is free software: you can redistribute
+    it and/or modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation, either version 3 of
+    the License, or (at your option) any later version.
+
+    StrEdit is distributed in the hope that it will
+    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with StrEdit.  If not, see
+    <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef __STREDIT_UI_H__
+#define __STREDIT_UI_H__
+
+#include <string>
+#include <boost/format.hpp>
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#       include <wx/wx.h>
+#endif
+
+//UI helper functions.
+namespace stredit {
+    wxString translate(char * cstr);
+    wxString translate(std::string str);
+    wxString FromUTF8(std::string str);
+    wxString FromUTF8(boost::format f);
+}
+
+//wxWidgets element IDs.
+enum {
+    //Main window.
+    SEARCH_Strings = wxID_HIGHEST + 1, // declares an id which will be used to call our button
+    LIST_Strings,
+    TEXT_Original,
+    TEXT_New
+}
+
+class StrEditApp : public wxApp {
+public:
+    bool OnInit();
+};
+
+//Main window class.
+class MainFrame : public wxFrame {
+public:
+    MainFrame(const wxChar *title);
+    void OnOpenFile(wxCommandEvent& event);
+    void OnSaveFile(wxCommandEvent& event);
+    void OnSaveFileAs(wxCommandEvent& event);
+    void OnQuit(wxCloseEvent& event);
+    void OnViewReadme(wxCommandEvent& event);
+    void OnAbout(wxCommandEvent& event);
+
+    void OnStringSelect(wxListEvent& event);
+    void OnStringFilter(wxCommandEvent& event);
+    void OnStringFilterCancel(wxCommandEvent& event);
+private:
+    wxListCtrl * stringList;
+    wxSearchCtrl * searchBox;  //Could be used for filtering the string list.
+    wxTextCtrl * originalTextBox;
+    wxTextCtrl * newTextBox;
+
+    DECLARE_EVENT_TABLE()
+};
+
+class OpenDialog : public wxDialog {
+public:
+    OpenDialog();
+    void OnQuit(wxCommandEvent& event);
+private:
+    wxFilePicker * oldOriginalPicker;
+    wxFilePicker * newOriginalPicker;
+    wxFilePicker * targetPicker;
+};
+
+#endif
