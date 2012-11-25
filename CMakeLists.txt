@@ -11,8 +11,8 @@ set (STREDIT_LIBS   boost_locale boost_filesystem boost_system strings wx_baseu-
 set (STREDIT_LIBS ${STREDIT_LIBS} comctl32 odbc32 wsock32 winspool winmm shell32 comctl32 ctl3d32 advapi32 wxpng-2.9-i586-mingw32msvc wxzlib-2.9-i586-mingw32msvc )
 
 # Set compiler flags.
-set (CMAKE_C_FLAGS  "-m${STREDIT_ARCH}  -static -static-libstdc++ -static-libgcc")
-set (CMAKE_CXX_FLAGS "-m${STREDIT_ARCH} -static -static-libstdc++ -static-libgcc")
+set (CMAKE_C_FLAGS  "-m${STREDIT_ARCH}  -static -static-libstdc++ -static-libgcc -O3")
+set (CMAKE_CXX_FLAGS "-m${STREDIT_ARCH} -static -static-libstdc++ -static-libgcc -O3")
 set (CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc")
 set (CMAKE_SHARED_LINKER_FLAGS "-static-libstdc++ -static-libgcc")
 set (CMAKE_MODULE_LINKER_FLAGS "-static-libstdc++ -static-libgcc")

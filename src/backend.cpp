@@ -183,21 +183,24 @@ namespace stredit {
         return p;
     }
 
-    int Levenshtein(const std::string first, const std::string second) {
-        int fLen = first.length();
-        int sLen = second.length();
-        int cost = 0;
+    //Calculate the Levenshtein distance between two strings.
+    //Code from <https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#C.2B.2B>
+    //Used under the CC-BY-SA 3.0 license: <http://creativecommons.org/licenses/by-sa/3.0/>
+    int Levenshtein(const std::string s1, const std::string s2) {
+        const size_t len1 = s1.size(), len2 = s2.size();
+        vector<unsigned int> col(len2+1), prevCol(len2+1);
 
-        if (first[0] != second[0])
-            cost = 1;
-
-        if (fLen == 0)
-            return sLen;
-        else if (sLen == 0)
-            return fLen;
-
-        //It gets complicated - look for a library to use.
-        return 0;
+        for (unsigned int i = 0; i < prevCol.size(); i++) {
+            prevCol[i] = i;
+        }
+        for (unsigned int i = 0; i < len1; i++) {
+            col[0] = i+1;
+            for (unsigned int j = 0; j < len2; j++) {
+                col[j+1] = min( min( 1 + col[j], 1 + prevCol[1 + j]), prevCol[j] + (s1[i]==s2[j] ? 0 : 1) );
+            }
+            col.swap(prevCol);
+        }
+        return prevCol[len2];
     }
 
     bool compare_old_new(const str_data first, const str_data second) {
