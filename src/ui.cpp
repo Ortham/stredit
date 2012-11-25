@@ -27,7 +27,10 @@
 #include <algorithm>
 #include <boost/locale.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 #include <wx/aboutdlg.h>
+#include <wx/msgdlg.h>
+#include <wx/progdlg.h>
 
 BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_CLOSE (MainFrame::OnClose )
@@ -42,6 +45,7 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_LIST_ITEM_SELECTED ( LIST_Strings , MainFrame::OnStringSelect)
     EVT_LIST_ITEM_DESELECTED ( LIST_Strings , MainFrame::OnStringDeselect)
 
+    EVT_TEXT_ENTER ( SEARCH_Strings, MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_SEARCH_BTN ( SEARCH_Strings , MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_CANCEL_BTN ( SEARCH_Strings , MainFrame::OnStringFilterCancel )
 END_EVENT_TABLE()
@@ -85,6 +89,9 @@ VirtualList::VirtualList(wxWindow * parent, wxWindowID id) : wxListCtrl(parent, 
 }
 
 wxString VirtualList::OnGetItemText(long item, long column) const {
+    if (!filter.empty())
+        item = filter[item];
+
     if (column == 0) {
         if (internalData[item].lDist == 0)
             return "";
@@ -106,7 +113,7 @@ wxListItemAttr * VirtualList::OnGetItemAttr(long item) const {
     return attr;
 }
 
-MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize) {
+MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize), stringsEdited(false) {
     //Set up menu bar first.
     wxMenuBar * MenuBar = new wxMenuBar();
     // File Menu
@@ -153,43 +160,35 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     //Display the OpenDialog, then get the strings from the picked files and
     //fill the string list with them.
 
-    std::vector<str_data> strList;
+    wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Opening file..."), 100, this);
+    progDia->Pulse();
     try {
-        GetStrings("Skyrim_English.STRINGS", strList);
+        GetStrings("testing.STRINGS", stringList->internalData);
     } catch (runtime_error& e) {
+        progDia->Destroy();
         wxMessageBox(
             FromUTF8(e.what()),
             translate("StrEdit: Error"),
             wxOK | wxICON_ERROR,
             this);
+        return;
     }
-    //A progress dialog for the above loading would be good.
-    sort(strList.begin(), strList.end(), compare_old_new);
-    stringList->SetItemCount(strList.size());
-    stringList->internalData = strList;
-    int i = 0;
-/*    for (std::vector<str_data>::const_iterator it=strList.begin(), endIt=strList.end(); it != endIt; ++it) {
-        wxListItem item;
-        item.SetId(i);
-        item.SetText(it->oldString);
-
-        stringList->InsertItem(item);
-        if (it->lDist == 0)
-            stringList->SetItem(i, 0, "");
-        else
-            stringList->SetItem(i, 0, wxString::Format(wxT("%i"), it->lDist));
-        stringList->SetItem(i, 1, wxString::Format(wxT("%i"), it->id));
-        stringList->SetItem(i, 2, FromUTF8(it->oldString));
-        stringList->SetItem(i, 3, FromUTF8(it->newString));
-
-        ++i;
-    }*/
+    progDia->Pulse();
+    sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
+    progDia->Pulse();
+    stringList->SetItemCount(stringList->internalData.size());
+    progDia->Destroy();
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {
-    if (event.GetId() == wxID_SAVE && !filePath.empty())
-        SetStrings(filePath, stringList->internalData);
-    else {
+    if (event.GetId() == wxID_SAVEAS)
+        filePath.clear();
+
+    SaveFile();
+}
+
+void MainFrame::SaveFile() {
+    if (filePath.empty()) {
         //Display file picker dialog.
         wxFileDialog saveFileDialog(this, _("Save As..."), wxEmptyString, wxEmptyString,
             "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS",
@@ -199,16 +198,22 @@ void MainFrame::OnSaveFile(wxCommandEvent& event) {
             return;
 
         filePath = saveFileDialog.GetPath().ToUTF8();
-        try {
-            SetStrings(filePath, stringList->internalData);
-        } catch (runtime_error& e) {
-            wxMessageBox(
-                FromUTF8(e.what()),
-                translate("StrEdit: Error"),
-                wxOK | wxICON_ERROR,
-                this);
-        }
     }
+
+    wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Saving file..."), 100, this);
+    progDia->Pulse();
+    try {
+        SetStrings(filePath, stringList->internalData);
+    } catch (runtime_error& e) {
+        progDia->Destroy();
+        wxMessageBox(
+            FromUTF8(e.what()),
+            translate("StrEdit: Error"),
+            wxOK | wxICON_ERROR,
+            this);
+        return;
+    }
+    progDia->Destroy();
 }
 
 void MainFrame::OnQuit(wxCommandEvent& event) {
@@ -217,6 +222,14 @@ void MainFrame::OnQuit(wxCommandEvent& event) {
 
 void MainFrame::OnClose(wxCloseEvent& event) {
     //Need to prompt save if strings have been edited.
+    if (stringsEdited) {
+        wxMessageDialog messDia(this, "Your changes have not been saved. Do you want to save them before exiting?", "Save changes?", wxCANCEL|wxYES_NO);
+
+        if (messDia.ShowModal() == wxID_CANCEL)
+            return;
+        else if (messDia.ShowModal() == wxID_YES)
+            SaveFile();
+    }
 
     Destroy();
 }
@@ -271,6 +284,7 @@ void MainFrame::OnStringDeselect(wxListEvent& event) {
     wxString newStr = newTextBox->GetValue();
 
     if (currStr != newStr) {
+        stringsEdited = true;
         stringList->internalData[event.GetIndex()].newString = newStr.ToUTF8();
         stringList->internalData[event.GetIndex()].edited = true;
         stringList->SetItem(event.GetIndex(), 3, newStr);
@@ -278,10 +292,28 @@ void MainFrame::OnStringDeselect(wxListEvent& event) {
 }
 
 void MainFrame::OnStringFilter(wxCommandEvent& event) {
-
+    string filterStr = event.GetString().ToUTF8().data(); //For some reason it doesn't like not having data()...
+    if (filterStr.empty()) {
+        OnStringFilterCancel(event);
+        return;
+    }
+    searchBox->ShowCancelButton(true);
+    size_t length = filterStr.length();
+    stringList->filter.clear();
+    for (size_t i=0, max=stringList->internalData.size(); i < max; ++i) {
+        if (boost::iequals(stringList->internalData[i].oldString.substr(0, length), filterStr))
+            stringList->filter.push_back(i);
+    }
+    size_t itemCount = stringList->filter.size();
+    stringList->SetItemCount(itemCount);
+    stringList->RefreshItems(0, itemCount - 1);
 }
 
 void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
-
+    searchBox->ShowCancelButton(false);
+    stringList->filter.clear();
+    size_t itemCount = stringList->internalData.size();
+    stringList->SetItemCount(itemCount);
+    stringList->RefreshItems(0, itemCount - 1);
 }
 

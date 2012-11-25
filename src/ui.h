@@ -64,6 +64,7 @@ public:
     VirtualList(wxWindow * parent, wxWindowID id);
 
     std::vector<stredit::str_data> internalData;
+    std::vector<int> filter;
 protected:
     wxString OnGetItemText(long item, long column) const;
     wxListItemAttr * OnGetItemAttr(long item) const;
@@ -86,6 +87,8 @@ public:
     void OnStringDeselect(wxListEvent& event);
     void OnStringFilter(wxCommandEvent& event);
     void OnStringFilterCancel(wxCommandEvent& event);
+
+    void SaveFile();
 private:
     VirtualList * stringList;
     wxSearchCtrl * searchBox;  //Could be used for filtering the string list.
@@ -93,6 +96,7 @@ private:
     wxTextCtrl * newTextBox;
 
     std::string filePath;
+    bool stringsEdited;
 
     DECLARE_EVENT_TABLE()
 };
