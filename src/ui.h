@@ -103,12 +103,15 @@ private:
 
 class OpenDialog : public wxDialog {
 public:
-    OpenDialog();
-    void OnQuit(wxCommandEvent& event);
+    OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title);
+
+    wxString GetSourcePath() const;
+    wxString GetTransPath() const;
+    wxString GetNewSourcePath() const;
 private:
-    wxFilePickerCtrl * oldOriginalPicker;
-    wxFilePickerCtrl * newOriginalPicker;
-    wxFilePickerCtrl * targetPicker;
+    wxFilePickerCtrl * orgPicker;
+    wxFilePickerCtrl * refPicker;
+    wxFilePickerCtrl * tarPicker;
 };
 
 #endif

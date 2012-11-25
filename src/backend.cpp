@@ -201,9 +201,17 @@ namespace stredit {
     }
 
     bool compare_old_new(const str_data first, const str_data second) {
-        if (first.newString.empty() && second.newString.empty())
-            return first.oldString < second.oldString;
+        //Untranslated strings first, followed by fuzzy matches, followed by all
+        //other strings. Within each group, sort alphabetically by the oldString.
+        if (first.newString.empty() && !second.newString.empty())
+            return true;
+        else if (!first.newString.empty() && second.newString.empty())
+            return false;
+        else if (first.lDist > 0 && second.lDist == 0)
+            return true;
+        else if (first.lDist == 0 && second.lDist > 0)
+            return false;
         else
-            return first.newString < second.newString;
+            return first.oldString < second.oldString;
     }
 }

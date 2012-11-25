@@ -160,10 +160,40 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     //Display the OpenDialog, then get the strings from the picked files and
     //fill the string list with them.
 
+    OpenDialog * od = new OpenDialog(this, wxID_ANY, "Open File(s)...");
+
+    if (od->ShowModal() != wxID_OK)
+        return;
+
+    string sourcePath = od->GetSourcePath().ToUTF8().data();
+    string transPath = od->GetTransPath().ToUTF8().data();
+    string newSourcePath = od->GetNewSourcePath().ToUTF8().data();
+    od->Destroy();
+
+    if (sourcePath.empty())
+        return;
+    else if (transPath.empty() && !newSourcePath.empty())
+        return;
+
     wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Opening file..."), 100, this);
     progDia->Pulse();
     try {
-        GetStrings("testing.STRINGS", stringList->internalData);
+        if (transPath.empty() && newSourcePath.empty()) {
+            //Only one file.
+            GetStrings(sourcePath, stringList->internalData);
+        } else {
+            //Two or three files.
+            boost::unordered_map<uint32_t, std::string> sourceMap;
+            boost::unordered_map<uint32_t, std::string> transMap;
+            GetStrings(sourcePath, sourceMap);
+            GetStrings(transPath, transMap);
+            TwoStringMatching(sourceMap, transMap, stringList->internalData);
+            if (!newSourcePath.empty()) {
+                boost::unordered_map<uint32_t, std::string> newSourceMap;
+                GetStrings(newSourcePath, newSourceMap);
+                UpdateStringIDs(newSourceMap, stringList->internalData);
+            }
+        }
     } catch (runtime_error& e) {
         progDia->Destroy();
         wxMessageBox(
@@ -315,5 +345,51 @@ void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
     size_t itemCount = stringList->internalData.size();
     stringList->SetItemCount(itemCount);
     stringList->RefreshItems(0, itemCount - 1);
+}
+
+OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
+
+    //Set up stuff in the frame.
+    //SetBackgroundColour(*wxWHITE);
+
+    wxSizer * buttons = CreateSeparatedButtonSizer(wxOK|wxCANCEL);
+
+    wxBoxSizer * bigBox = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer * orgBox = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer * tarBox = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer * refBox = new wxBoxSizer(wxHORIZONTAL);
+
+    orgPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
+    tarPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
+    refPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
+
+    orgBox->Add(new wxStaticText(this, wxID_ANY, "Source file"), 1, wxEXPAND|wxLEFT|wxALL, 5);
+    orgBox->Add(orgPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
+
+    tarBox->Add(new wxStaticText(this, wxID_ANY, "Translation file (optional)"), 1, wxEXPAND|wxLEFT|wxALL, 5);
+    tarBox->Add(tarPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
+
+    refBox->Add(new wxStaticText(this, wxID_ANY, "Updated source file (optional)"), 1, wxEXPAND|wxLEFT|wxALL, 5);
+    refBox->Add(refPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
+
+    bigBox->Add(orgBox, 1, wxEXPAND|wxALL, 5);
+    bigBox->Add(tarBox, 1, wxEXPAND|wxALL, 5);
+    bigBox->Add(refBox, 1, wxEXPAND|wxALL, 5);
+    bigBox->Add(buttons, 0, wxEXPAND|wxALL, 5);
+
+    //Now set the layout and sizes.
+    SetSizerAndFit(bigBox);
+}
+
+wxString OpenDialog::GetSourcePath() const {
+    return orgPicker->GetPath();
+}
+
+wxString OpenDialog::GetTransPath() const {
+    return tarPicker->GetPath();
+}
+
+wxString OpenDialog::GetNewSourcePath() const {
+    return refPicker->GetPath();
 }
 
