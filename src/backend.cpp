@@ -137,7 +137,7 @@ namespace stredit {
             data.id = it->first;
             data.oldString = it->second;
             boost::unordered_map<uint32_t, std::string>::const_iterator itr = targetStrMap.find(it->first);
-            if (itr != targetStrMap.end()) {
+            if (itr != targetStrMap.end() && it->second != itr->second) {
                 data.newString = itr->second;
             }
             stringList.push_back(data);
@@ -151,18 +151,22 @@ namespace stredit {
                          std::vector<str_data>& stringList) {
         for (std::vector<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
             int leastLDist = -1;
+            string oldStr = it->oldString;
             for (boost::unordered_map<uint32_t, std::string>::const_iterator itr=oldOrigStrMap.begin(), endItr=oldOrigStrMap.end(); itr != endItr; ++itr) {
-                if (itr->second == it->oldString) {
+                if (itr->second == oldStr) {
                     it->id = itr->first;
+                    it->oldString = itr->second;
+                    it->lDist = 0;
                     break;
                 } else {
                     //Levenshtein match.
                     //Get the Levenshtein distance of the two strings, compare
                     //to the previously-obtained distance (if exists). If smaller,
                     //store the current string.
-                    int lDist = Levenshtein(it->oldString, itr->second);
+                    int lDist = Levenshtein(oldStr, itr->second);
                     if (leastLDist == -1 || leastLDist > lDist) {
                         it->id = itr->first;
+                        it->oldString = itr->second;
                         it->lDist = lDist;
                         leastLDist = lDist;
                     }

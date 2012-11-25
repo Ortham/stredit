@@ -81,6 +81,10 @@ bool StrEditApp::OnInit() {
     frame->Show(true);
     SetTopWindow(frame);
 
+    //Display OpenDialog.
+    wxCommandEvent event;
+    frame->OnOpenFile(event);
+
     return true;
 }
 
@@ -131,7 +135,7 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     SetMenuBar(MenuBar);
 
     //Set up stuff in the frame.
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_MENU));
 
     searchBox = new wxSearchCtrl(this, SEARCH_Strings, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 
@@ -244,6 +248,8 @@ void MainFrame::SaveFile() {
         return;
     }
     progDia->Destroy();
+
+    stringsEdited = false;
 }
 
 void MainFrame::OnQuit(wxCommandEvent& event) {
@@ -255,9 +261,11 @@ void MainFrame::OnClose(wxCloseEvent& event) {
     if (stringsEdited) {
         wxMessageDialog messDia(this, "Your changes have not been saved. Do you want to save them before exiting?", "Save changes?", wxCANCEL|wxYES_NO);
 
-        if (messDia.ShowModal() == wxID_CANCEL)
+        int ret = messDia.ShowModal();
+
+        if (ret == wxID_CANCEL)
             return;
-        else if (messDia.ShowModal() == wxID_YES)
+        else if (ret == wxID_YES)
             SaveFile();
     }
 
