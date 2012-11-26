@@ -28,6 +28,11 @@ ELSE ()
     link_directories    ("${CMAKE_SOURCE_DIR}/externals/boost/stage-${STREDIT_ARCH}/lib")
 ENDIF ()
 
+IF (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set (STREDIT_SRC ${STREDIT_SRC} "${CMAKE_SOURCE_DIR}/resource.rc")
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--subsystem,windows")
+ENDIF ()
+
 # Build executable.
 add_executable          (StrEdit ${STREDIT_SRC})
 target_link_libraries   (StrEdit ${STREDIT_LIBS})

@@ -31,6 +31,7 @@
 #include <wx/aboutdlg.h>
 #include <wx/msgdlg.h>
 #include <wx/progdlg.h>
+#include <wx/splitter.h>
 
 BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_CLOSE (MainFrame::OnClose )
@@ -135,28 +136,40 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     SetMenuBar(MenuBar);
 
     //Set up stuff in the frame.
-    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_MENU));
+    wxSplitterWindow * splitter = new wxSplitterWindow(this);
 
-    searchBox = new wxSearchCtrl(this, SEARCH_Strings, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+    wxPanel * topPanel = new wxPanel(splitter);
+    wxPanel * bottomPanel = new wxPanel(splitter);
 
-    stringList = new VirtualList(this, LIST_Strings);
+    searchBox = new wxSearchCtrl(topPanel, SEARCH_Strings, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+
+    stringList = new VirtualList(topPanel, LIST_Strings);
     stringList->InsertColumn(0, translate("Fuzzy"));
     stringList->InsertColumn(1, translate("ID"));
     stringList->InsertColumn(2, translate("Original String"));
     stringList->InsertColumn(3, translate("New String"));
 
-    originalTextBox = new wxTextCtrl(this, TEXT_Original, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
-    newTextBox = new wxTextCtrl(this, TEXT_New, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+    originalTextBox = new wxTextCtrl(bottomPanel, TEXT_Original, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+    newTextBox = new wxTextCtrl(bottomPanel, TEXT_New, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 
-    //Contents in one big resizing box.
-    wxBoxSizer *bigBox = new wxBoxSizer(wxVERTICAL);
+    //Set up the sizers.
+    wxBoxSizer * bigBox = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer * topSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer * bottomSizer = new wxBoxSizer(wxVERTICAL);
 
-    bigBox->Add(searchBox, 0, wxEXPAND|wxLEFT|wxTOP|wxRIGHT, 5);
-    bigBox->Add(stringList, 1, wxEXPAND|wxLEFT|wxRIGHT, 5);
-    bigBox->Add(originalTextBox, 0, wxEXPAND|wxALL, 5);
-    bigBox->Add(newTextBox, 0, wxEXPAND|wxLEFT|wxBOTTOM|wxRIGHT, 5);
+    topSizer->Add(searchBox, 0, wxEXPAND);
+    topSizer->Add(stringList, 1, wxEXPAND);
+    bottomSizer->Add(originalTextBox, 1, wxEXPAND|wxBOTTOM, 5);
+    bottomSizer->Add(newTextBox, 1, wxEXPAND);
+    bigBox->Add(splitter, 1, wxEXPAND|wxALL, 5);
 
-    //Now set the layout and sizes.
+    //Now set the layout and misc. elements.
+    splitter->SplitHorizontally(topPanel, bottomPanel);
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+    CreateStatusBar();
+
+    topPanel->SetSizerAndFit(topSizer);
+    bottomPanel->SetSizerAndFit(bottomSizer);
     SetSizerAndFit(bigBox);
 }
 
@@ -212,6 +225,8 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     progDia->Pulse();
     stringList->SetItemCount(stringList->internalData.size());
     progDia->Destroy();
+    SetStatusText(wxString::Format(wxT("%i strings"), stringList->internalData.size()));
+    SetTitle("StrEdit : " + sourcePath);
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {
