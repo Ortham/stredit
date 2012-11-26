@@ -1,92 +1,37 @@
 StrEdit
 =======
 
-A strings file editor designed for mod translators.
+A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod
+translators.
+
+Please see the HTML readme file at "StrEdit Readme.html" for more information.
 
 
-Rationale
-=========
+Build Instructions
+==================
 
-Going by a few forum posts by translators and by the lack of positive search
-results on Skyrim Nexus, there doesn't seem to be a solid tool for translators
-to use, so translation has to be done either in the Creation Kit or a third
-party editor such as TES5Edit.
+Under construction.
 
-These editors are far from ideal as they throw a great deal of unnecessary
-information at translators and do not provide a way for them to focus on only
-the translation process.
+Requirements:
 
-Poedit is a popular utility for producing translations of applications that use
-the GNU Gettext localisation system. Its primary interface consists of three
-main fields:
-  1. A list of all the strings in the translation file, with original and
-     translated strings side-by-side.
-  2. A read-only text box containing the original string.
-  3. An editable text box containing the translation.
+  * CMake
+    - <http://cmake.org/>
+    - Tested with v2.8.9.
+  * Boost C++ Libraries
+    - <http://sourceforge.net/projects/boost/files/boost/>
+    - Download the latest 7-zipped source code.
+    - Tested with v1.51.0.
+  * wxWidgets
+    - <http://www.wxwidgets.org/downloads/>
+    - Download the latest zipped v2.9.x source code.
+    - Tested with v2.9.4.
+  * libstrings
+    - <http://github.com/WrinklyNinja/libstrings>
+    - Download the latest source code.
+  * A native build system of your choice.
+    - Tested with GNU Make on Ubuntu Linux 12.10.
 
-This strips away everything other than what the translator need concern
-themselves with, so it would be a good idea to imitate this interface.
-
-
-Operation
-=========
-
-Backend: libstrings
-Frontend: wxWidgets-based GUI.
-
-On startup, the user would be presented with a file selection dialog in which
-they could choose the original strings file to work off, and optionally an
-existing strings file which would be edited to include their translations. A
-third file may be picked if updating a translation file for a plugin that has
-been altered since it was last translated.
-
-Once the files are selected, the user would be presented with the main
-interface. The left-hand side of the strings list would be populated with the
-original strings file's strings. The right-hand side of the strings list would
-be populated with translated strings if an existing file was also selected.
-String matching would be done using their IDs.
-
-Strings without existing translations would be placed at the top of the list for
-increased visibility. Edited strings would have their row bolded. Clicking on a
-row would write the original string and translation (if exists) to their
-respective text boxes. Edits would be applied (but not saved) automatically when
-a new row is selected. Rows could be moved between using keyboard arrow keys as
-well as using the mouse, so that all work could be done using only the keyboard.
-
-Translations could be undone via a row right-click option. Saving could be done
-via "Save As..." if no existing file is loaded, or also by "Save" if an existing
-file is loaded, in which case the existing file is overwritten. Saving to a new
-file would automatically select the file extension of the original strings file,
-so translated .DLSTRINGS files would remain .DLSTRINGS files, etc. The filename
-itself would also preserve the required convention, though I'm not sure what
-language names are accepted - I'll look at mods with existing translations to
-find out.
-
-Because StrEdit would be used to create translated copies of existing strings
-files, which could be created as part of the mod using the CK or other editors,
-it doesn't need to look inside plugins.
-
-
-Example Usage
-=============
-
-A user has A.esp and a corresponding A_English.STRINGS file, but they'd like a
-French translation. They then open A_English.STRINGS in StrEdit and translate
-the strings inside, then save the translation as A_French.STRINGS. All that's
-changed is the text, the IDs must match between the files because otherwise the
-plugin will load the wrong strings for each record, or fail to find strings.
-
-If the user doesn't translate all the strings in one go, but decides to finish
-the translation off later, they then load both files in StrEdit - it matches the
-original and translation using their associated IDs, so that the user can see
-which strings they've already translated. They can then continue from where they
-left off and save the updated translation file.
-
-The author of A.esp then releases an update, and the user finds that his
-translation no longer works with the update because the IDs have changed, or
-more things have been added so the translation is now incomplete again. The user
-then opens 3 files in StrEdit: their translation file, the strings file for the
-new version and the strings file for the old version. StrEdit uses IDs to match
-the translated strings to the old untranslated strings, then uses the strings
-themselves to match the old untranslated strings to the new untranslated
-strings, allowing it to match the translated strings to the new IDs.
+    mkdir ../../build
+    cd ../../build
+    cmake .. -DSTREDIT_ARCH=32 -DSTREDIT_LINK=STATIC -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake
+    make

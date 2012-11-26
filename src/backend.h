@@ -32,9 +32,9 @@
 namespace stredit {
     //Structure for holding string data.
     struct str_data {
-        str_data() : lDist(0), id(0), edited(false) {}
+        str_data() : fuzzy(false), id(0), edited(false) {}
 
-        unsigned int lDist;  //For when using Levenstein matching.
+        bool fuzzy;  //For when using Levenstein matching.
         uint32_t id;
         std::string oldString;
         std::string newString;

@@ -97,10 +97,10 @@ wxString VirtualList::OnGetItemText(long item, long column) const {
         item = filter[item];
 
     if (column == 0) {
-        if (internalData[item].lDist == 0)
-            return "";
+        if (internalData[item].fuzzy)
+            return FromUTF8("\u2713");
         else
-            return wxString::Format(wxT("%i"), internalData[item].lDist);
+            return "";
     } else if (column == 1)
         return wxString::Format(wxT("%i"), internalData[item].id);
     else if (column == 2)
@@ -140,7 +140,7 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     searchBox = new wxSearchCtrl(this, SEARCH_Strings, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 
     stringList = new VirtualList(this, LIST_Strings);
-    stringList->InsertColumn(0, translate("Lev. Dist."));
+    stringList->InsertColumn(0, translate("Fuzzy"));
     stringList->InsertColumn(1, translate("ID"));
     stringList->InsertColumn(2, translate("Original String"));
     stringList->InsertColumn(3, translate("New String"));

@@ -156,7 +156,7 @@ namespace stredit {
                 if (itr->second == oldStr) {
                     it->id = itr->first;
                     it->oldString = itr->second;
-                    it->lDist = 0;
+                    it->fuzzy = false;
                     break;
                 } else {
                     //Levenshtein match.
@@ -167,7 +167,7 @@ namespace stredit {
                     if (leastLDist == -1 || leastLDist > lDist) {
                         it->id = itr->first;
                         it->oldString = itr->second;
-                        it->lDist = lDist;
+                        it->fuzzy = true;
                         leastLDist = lDist;
                     }
                 }
@@ -214,9 +214,9 @@ namespace stredit {
             return true;
         else if (!first.newString.empty() && second.newString.empty())
             return false;
-        else if (first.lDist > 0 && second.lDist == 0)
+        else if (first.fuzzy && !second.fuzzy)
             return true;
-        else if (first.lDist == 0 && second.lDist > 0)
+        else if (!first.fuzzy && second.fuzzy)
             return false;
         else
             return first.oldString < second.oldString;
