@@ -1,6 +1,7 @@
 /*  StrEdit
 
-    A STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators.
+    A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod
+    translators.
 
     Copyright (C) 2012    WrinklyNinja
 
@@ -25,8 +26,10 @@
 
 #include <libstrings.h>
 #include <stdexcept>
+#include <boost/locale.hpp>
 
 using namespace std;
+using boost::locale::translate;
 
 namespace stredit {
     //String file reading.
@@ -39,12 +42,12 @@ namespace stredit {
         ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not open strings file.");
+            throw runtime_error(translate("Could not open strings file."));
 
         ret = GetStrings(sh, &strings, &numStrings);
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not read strings file.");
+            throw runtime_error(translate("Could not read strings file."));
 
         stringMap.clear();
         for (size_t i=0; i < numStrings; ++i) {
@@ -63,12 +66,12 @@ namespace stredit {
         ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not open strings file.");
+            throw runtime_error(translate("Could not open strings file."));
 
         ret = GetStrings(sh, &strings, &numStrings);
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not read strings file.");
+            throw runtime_error(translate("Could not read strings file."));
 
         stringList.clear();
         for (size_t i=0; i < numStrings; ++i) {
@@ -91,7 +94,7 @@ namespace stredit {
         ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not open strings file.");
+            throw runtime_error(translate("Could not open strings file."));
 
         //Create string_data array.
         numStrings = stringList.size();
@@ -116,12 +119,12 @@ namespace stredit {
         delete [] strings;
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not set new strings.");
+            throw runtime_error(translate("Could not set new strings."));
 
         ret = SaveStringsFile(sh, reinterpret_cast<const uint8_t *>(path.c_str()));
 
         if (ret != LIBSTRINGS_OK)
-            throw runtime_error("Could not write strings file.");
+            throw runtime_error(translate("Could not write strings file."));
 
         CloseStringsFile(sh);
     }

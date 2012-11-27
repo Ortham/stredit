@@ -1,6 +1,7 @@
 /*  StrEdit
 
-    A STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators.
+    A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod
+    translators.
 
     Copyright (C) 2012    WrinklyNinja
 

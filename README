@@ -10,7 +10,14 @@ Please see the HTML readme file at "StrEdit Readme.html" for more information.
 Build Instructions
 ==================
 
-Under construction.
+Note: These build instructions are a work in progress, as I have
+recently switched from Windows 7 to Ubuntu. Sorry about that. Currently
+my knowledge is limited to compiling for Linux and cross-compiling for
+Windows. The whole point of using CMake is that you should be able to
+generate MSVC project files from it though.
+
+Note: All paths are given relative to the top directory of the
+StrEdit source (ie. where this README is).
 
 Requirements:
 
@@ -23,7 +30,8 @@ Requirements:
     - Tested with v1.51.0.
   * wxWidgets
     - <http://www.wxwidgets.org/downloads/>
-    - Download the latest zipped v2.9.x source code.
+    - Download the latest zipped v2.9.x source code, with the correct line
+      endings for your dev environment.
     - Tested with v2.9.4.
   * libstrings
     - <http://github.com/WrinklyNinja/libstrings>
@@ -31,7 +39,41 @@ Requirements:
   * A native build system of your choice.
     - Tested with GNU Make on Ubuntu Linux 12.10.
 
-    mkdir ../../build
-    cd ../../build
-    cmake .. -DSTREDIT_ARCH=32 -DSTREDIT_LINK=STATIC -DCMAKE_SYSTEM_NAME=Windows
+Preparing libstrings:
+  1. Create a 'libstrings' folder beside your StrEdit folder.
+  2. Place the contents of the libstrings archive you downloaded (should be
+     'CMakeLists.txt', 'README', etc.) into the 'libstrings' folder.
+  3. Build libstrings as directed in its README.
+
+Preparing wxWidgets:
+  1. Create a 'wxWidgets' folder beside your StrEdit folder.
+  2. Place the contents of the wxWidgets archive you downloaded (should be
+     'build', 'include', etc.) into the 'wxWidgets' folder.
+  3. Can't remember this bit...
+
+Boost will be prepared as part of preparing libstrings.
+
+
+Building StrEdit
+----------------
+
+Open a Terminal window and navigate to the root of the StrEdit source.
+
+For cross-compiling to Windows:
+
+    mkdir build
+    cd build
+    cmake .. -DSTREDIT_LIBS_DIR=.. -DSTREDIT_ARCH=32 -DSTREDIT_LINK=STATIC -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake
     make
+
+If both native and cross-compiling, you'll need to delete the 'build'
+folder otherwise CMake will get confused and only build one of them (it
+doesn't seem to overwrite all the necessary config files when it
+generates the build system the second time).
+
+To compile a shared library, swap -DLIBSTR_LINK=STATIC with
+-DLIBSTR_LINK=SHARED
+
+To compile a 64 bit library, replace all instances of "32" in the above
+commands with "64". Also replace all instances of "i586-mingw32msvc"
+in the echo command with "x86_64-w64-mingw32":

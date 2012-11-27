@@ -1,6 +1,7 @@
 ﻿/*  StrEdit
 
-    A STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators.
+    A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod
+    translators.
 
     Copyright (C) 2012    WrinklyNinja
 
@@ -109,7 +110,7 @@ wxString VirtualList::OnGetItemText(long item, long column) const {
 }
 
 wxListItemAttr * VirtualList::OnGetItemAttr(long item) const {
-	if (!filter.empty())
+    if (!filter.empty())
         item = filter[item];
 
     if (internalData[item].edited)
@@ -179,7 +180,7 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     //Display the OpenDialog, then get the strings from the picked files and
     //fill the string list with them.
 
-    OpenDialog * od = new OpenDialog(this, wxID_ANY, "Open File(s)...");
+    OpenDialog * od = new OpenDialog(this, wxID_ANY, translate("Open File(s)..."));
 
     if (od->ShowModal() != wxID_OK)
         return;
@@ -189,10 +190,21 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     string newSourcePath = od->GetNewSourcePath().ToUTF8().data();
     od->Destroy();
 
-    if (sourcePath.empty())
+    if (sourcePath.empty()) {
+        wxMessageBox(
+            FromUTF8("Invalid file combination selected."),
+            translate("StrEdit: Error"),
+            wxOK | wxICON_ERROR,
+            this);
         return;
-    else if (transPath.empty() && !newSourcePath.empty())
+    } else if (transPath.empty() && !newSourcePath.empty()) {
+        wxMessageBox(
+            FromUTF8("Invalid file combination selected."),
+            translate("StrEdit: Error"),
+            wxOK | wxICON_ERROR,
+            this);
         return;
+    }
 
     wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Opening file..."), 100, this);
     progDia->SetIcon(wxICON(MAINICON));
@@ -242,7 +254,7 @@ void MainFrame::OnSaveFile(wxCommandEvent& event) {
 void MainFrame::SaveFile() {
     if (filePath.empty()) {
         //Display file picker dialog.
-        wxFileDialog saveFileDialog(this, _("Save As..."), wxEmptyString, wxEmptyString,
+        wxFileDialog saveFileDialog(this, translate("Save As..."), wxEmptyString, wxEmptyString,
             "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS",
             wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 
@@ -280,7 +292,7 @@ void MainFrame::OnQuit(wxCommandEvent& event) {
 void MainFrame::OnClose(wxCloseEvent& event) {
     //Need to prompt save if strings have been edited.
     if (stringsEdited) {
-        wxMessageDialog messDia(this, "Your changes have not been saved. Do you want to save them before exiting?", "Save changes?", wxCANCEL|wxYES_NO);
+        wxMessageDialog messDia(this, translate("Your changes have not been saved. Do you want to save them before exiting?"), translate("Save changes?"), wxCANCEL|wxYES_NO);
         messDia.SetIcon(wxICON(MAINICON));
 
         int ret = messDia.ShowModal();
@@ -309,9 +321,9 @@ void MainFrame::OnAbout(wxCommandEvent& event) {
     wxAboutDialogInfo aboutInfo;
     aboutInfo.SetName("StrEdit");
     aboutInfo.SetVersion(version_string);
-    aboutInfo.SetDescription(translate("A STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators."));
+    aboutInfo.SetDescription(translate("A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators."));
     aboutInfo.SetCopyright("Copyright (C) 2012 WrinklyNinja.");
-    aboutInfo.SetWebSite("https://github.com/WrinklyNinja/stredit");
+    aboutInfo.SetWebSite("http://github.com/WrinklyNinja/stredit");
     aboutInfo.SetLicence("This program is free software: you can redistribute it and/or modify\n"
     "it under the terms of the GNU General Public License as published by\n"
     "the Free Software Foundation, either version 3 of the License, or\n"
@@ -324,29 +336,29 @@ void MainFrame::OnAbout(wxCommandEvent& event) {
     "\n"
     "You should have received a copy of the GNU General Public License\n"
     "along with this program.  If not, see <http://www.gnu.org/licenses/>.");
-    //aboutInfo.SetIcon(wxIconLocation(prog_filename));
+    aboutInfo.SetIcon(wxICON(MAINICON));
     wxAboutBox(aboutInfo);
 }
 
 
 void MainFrame::OnStringSelect(wxListEvent& event) {
 
-	if (stringList->currentSelectionIndex != -1) {
+    if (stringList->currentSelectionIndex != -1) {
 
-		wxString currStr = stringList->internalData[stringList->currentSelectionIndex].newString;
-		wxString newStr = newTextBox->GetValue();
+        wxString currStr = stringList->internalData[stringList->currentSelectionIndex].newString;
+        wxString newStr = newTextBox->GetValue();
 
-		if (currStr != newStr) {
-			stringsEdited = true;
-			stringList->internalData[stringList->currentSelectionIndex].newString = newStr.ToUTF8();
-			stringList->internalData[stringList->currentSelectionIndex].edited = true;
-			stringList->RefreshItems(0, stringList->GetItemCount() - 1);
-		}
-	}
-	if (stringList->filter.empty())
-		stringList->currentSelectionIndex = event.GetIndex();
-	else
-		stringList->currentSelectionIndex = stringList->filter[event.GetIndex()];
+        if (currStr != newStr) {
+            stringsEdited = true;
+            stringList->internalData[stringList->currentSelectionIndex].newString = newStr.ToUTF8();
+            stringList->internalData[stringList->currentSelectionIndex].edited = true;
+            stringList->RefreshItems(0, stringList->GetItemCount() - 1);
+        }
+    }
+    if (stringList->filter.empty())
+        stringList->currentSelectionIndex = event.GetIndex();
+    else
+        stringList->currentSelectionIndex = stringList->filter[event.GetIndex()];
 
     //Load the selected strings.
     str_data data = stringList->internalData[stringList->currentSelectionIndex];
@@ -371,6 +383,7 @@ void MainFrame::OnStringFilter(wxCommandEvent& event) {
     size_t itemCount = stringList->filter.size();
     stringList->SetItemCount(itemCount);
     stringList->RefreshItems(0, itemCount - 1);
+    SetStatusText(wxString::Format(wxT("%i strings (%i hidden)"), stringList->internalData.size(), stringList->internalData.size() - itemCount));
 }
 
 void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
@@ -379,6 +392,7 @@ void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
     size_t itemCount = stringList->internalData.size();
     stringList->SetItemCount(itemCount);
     stringList->RefreshItems(0, itemCount - 1);
+    SetStatusText(wxString::Format(wxT("%i strings"), stringList->internalData.size()));
 }
 
 OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
@@ -397,13 +411,13 @@ OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) 
     tarPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
     refPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
 
-    orgBox->Add(new wxStaticText(this, wxID_ANY, "Source file"), 1, wxEXPAND|wxLEFT|wxALL, 5);
+    orgBox->Add(new wxStaticText(this, wxID_ANY, translate("Source file")), 1, wxEXPAND|wxLEFT|wxALL, 5);
     orgBox->Add(orgPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
 
-    tarBox->Add(new wxStaticText(this, wxID_ANY, "Translation file (optional)"), 1, wxEXPAND|wxLEFT|wxALL, 5);
+    tarBox->Add(new wxStaticText(this, wxID_ANY, translate("Translation file (optional)")), 1, wxEXPAND|wxLEFT|wxALL, 5);
     tarBox->Add(tarPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
 
-    refBox->Add(new wxStaticText(this, wxID_ANY, "Updated source file (optional)"), 1, wxEXPAND|wxLEFT|wxALL, 5);
+    refBox->Add(new wxStaticText(this, wxID_ANY, translate("Updated source file (optional)")), 1, wxEXPAND|wxLEFT|wxALL, 5);
     refBox->Add(refPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
 
     bigBox->Add(orgBox, 1, wxEXPAND|wxALL, 5);

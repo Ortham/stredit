@@ -5,16 +5,10 @@
     body {font-family:Helvetica,sans-serif;font-size:10pt;}
     h1 + p {text-align:center;}
     li {margin-bottom:10px;}
-    li ul, li ol {margin-top:0.4em;}
     q {font-style:italic;}
-    code {display:inline-block; padding:2px 5px; background:#eee;}
     td, th {border:1px solid #ddd; padding: 5px; vertical-align:top;}
     table {border-collapse:collapse; margin:1em;background:#FafaFf;}
     thead {font-weight:bold;background:#99CCFF;}
-    code.box {line-height:20px; white-space:pre; margin:1em 0 0 3em; display:table; padding:5px 10px;}
-    ol li ol {list-style:lower-alpha;}
-    ol li ol li ol {list-style:lower-roman;}
-    ol ol li {margin-bottom:0.2em;}
     blockquote {background:#E6E6FA; display:table; padding:5px 30px 5px 10px;}
     h1 {text-align:center;font-size:24pt;}
     h2 {margin-top:3em;font-size:20pt;}
@@ -23,6 +17,7 @@
     a:link {text-decoration:none;}
     a:hover {text-decoration:underline;}
     a[href^="http"]:after {padding-left:2px; content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);}
+    img{display:block;margin:1em;}
 </style>
 
 <h1>StrEdit</h1>
@@ -47,16 +42,13 @@
 <p>To uninstall, delete the <q>StrEdit</q> folder you previously extracted.
 
 <h2 id="usage">Usage</h2>
-<p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. On launch, the <q>Open File(s)...</q> dialog, shown below, is displayed. The next step is the most complicated part of using StrEdit, so read on carefully.
-<figure>
+<p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. On launch, the <q>Open File(s)...</q> dialog, shown below, is displayed.
 <img alt="open files" src="images/open-files.png"/>
-<figcaption>The Open File(s) dialog.</figcaption>
-</figure>
 <p>There are three ways for StrEdit to load translation files, based on what combination of files you open. The valid combinations are:
 <ul>
-    <li><b>Source file only</b>: The source file opened will, as the name suggests, be used as the source of the original strings. Use this option if you wish to create a translation strings file from scratch.
-    <li><b>Source and Translation files</b>: The original strings are obtained from the source file, and the translated strings are obtained from the translation file. The strings are matched up using their IDs, so this option should only be used when updating a translation file using the same version of the source file as was used to create it.
-    <li><b>Source, Translation and Updated Source files</b>: The original strings are obtained from the source file, the translated strings are obtained from the translation file, and the string IDs are obtained from the updated source file. If an exact match for a string in the source file cannot be found in the updated source file, the string will be assigned the ID of the closest-matching string, and the distance of the match will be given in the main display so that the user can see which matches are inexact. This option should be used when updating a translation file using a source file that has changed since the translation file was created.
+    <li><b>Source file only.</b> The source file opened will, as the name suggests, be used as the source of the original strings. Use this option if you wish to create a translation strings file from scratch.
+    <li><b>Source and Translation files.</b> The original strings are obtained from the source file, and the translated strings are obtained from the translation file. The strings are matched up using their IDs, so this option should only be used when updating a translation file using the same version of the source file as was used to create it.
+    <li><b>Source, Translation and Updated Source files.</b> The original strings and string IDs are obtained from the updated source file, and the translated strings are obtained from the translation file. The strings are first matched between the source and translation files using their IDs. The source and updated source strings are then matched by looking for exact matches or, if no exact match is found, by looking for the closest inexact match (known as a 'fuzzy' match). This option should be used when updating a translation file using a source file that has changed since the translation file was created.
 </ul>
 <p>The following example should hopefully clarify any confusion arising from the above:
 <blockquote>
@@ -67,20 +59,19 @@
 <p>Bob opens the v1.0 AliceMod_English.STRINGS and AliceMod_German.STRINGS and the v1.1 AliceMod_English.STRINGS in StrEdit as the source, translation and updated source files respectively. Because the strings with the fixed typos are not exactly the same as the strings in the v1.0 source file, StrEdit will match them inexactly with the existing translations. Bob then checks that these matches are correct, making any changes if required, and adds translations for the new strings. He then saves his translation again as AliceMod_German.STRINGS, and can now use his translation with AliceMod v1.1.
 </blockquote>
 <p>Once StrEdit has opened the strings file(s) selected, it will display its main window:
-<figure>
 <img alt="main window" src="images/main.png"/>
-<figcaption>The main window.</figcaption>
-</figure>
-<p>The main window consists of four elements:
-<ul>
-    <li><b>Filter Box</b>: Entering text into this box then pressing <q>Enter</q> or clicking the magnifying glass icon will filter out any rows in the String List that do not have original strings that start with the same text. Clicking the cancel icon or clearing the text then pressing enter or clicking the magnifying glass icon will remove the filter.
-    <li><b>String List</b>: Clicking on a row will put its original and new strings into their respective boxes. Rows containing new strings which have been edited will be displayed in red text. For rows that contain an original and new string that were matched inexactly, the <q>Fuzzy</q> column will display the Levenshtein distance between the two strings a number for any rows that contain an original and a new string that were matched inexactly, with lower numbers being a closer match.
-    <li><b>Original String Box</b>: Displays the text in the <q>Original String</q> column of the selected row. This text is non-editable.
-    <li><b>New String Box</b>: When a row is selected, this box is filled with the text in its <q>New String</q> column. Any edits made are applied to that row when another row is selected.
-</ul>
-<p>To translate the strings, simply select a row, enter your translation into the new string box, then select the next row and repeat until all original strings have been translated.
+<p>The main window consists of four primary elements:
+<table>
+    <thead>
+        <tr><th>Element<th>Description
+    <tbody>
+        <tr><td>Filter Box<td>This box can be used to filter the list of strings. Entering text into this box then pressing <q>Enter</q> or clicking the magnifying glass icon will filter out any rows in the String List that do not have original strings that start with the same text. Clicking the cancel icon or clearing the text then pressing enter or clicking the magnifying glass icon will remove the filter. The status bar will give a count of how many strings are being filtered when a filter is applied.
+        <tr><td>String List<td>This is the list of all the strings in the loaded source string file. Clicking on a row will put its original and new strings into their respective boxes. For rows that contain an original and new string that were matched inexactly, the <q>Fuzzy</q> column will be ticked.
+        <tr><td>Original String Box<td>Displays the text in the <q>Original String</q> column of the selected row. This text is non-editable.
+        <tr><td>New String Box<td>When a row is selected, this box is filled with the text in its <q>New String</q> column. Any edits made are applied to that row when another row is selected.
+</table>
+<p>To translate the strings, simply select a row, enter your translation into the new string box, then select the next row and repeat until all original strings have been translated. Keyboard navigation using the tab and arrow keys is supported, as are the usual shortcuts for saving and undoing work.
 <p>Once you have finished working, select <q>File->Save</q> or <q>File->Save As...</q> to save your work. If you attempt to quit with unsaved work, StrEdit will ask you if you want to save it before quitting.
-<p>That's pretty much all there is to it.
 
 <h2 id="credits">Credits</h2>
 <p>Thanks go to shadeMe and zilav for answering some questions I had during development.
