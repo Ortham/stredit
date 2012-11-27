@@ -78,7 +78,6 @@ namespace stredit {
 //Draws the main window when program starts.
 bool StrEditApp::OnInit() {
     MainFrame *frame = new MainFrame(wxT("StrEdit"));
-    //frame->SetIcon(wxIconLocation(prog_filename));
     frame->Show(true);
     SetTopWindow(frame);
 
@@ -166,6 +165,7 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     //Now set the layout and misc. elements.
     splitter->SplitHorizontally(topPanel, bottomPanel);
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+    SetIcon(wxICON(MAINICON));
     CreateStatusBar();
 
     topPanel->SetSizerAndFit(topSizer);
@@ -193,6 +193,7 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
         return;
 
     wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Opening file..."), 100, this);
+    progDia->SetIcon(wxICON(MAINICON));
     progDia->Pulse();
     try {
         if (transPath.empty() && newSourcePath.empty()) {
@@ -243,6 +244,8 @@ void MainFrame::SaveFile() {
             "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS",
             wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 
+        saveFileDialog.SetIcon(wxICON(MAINICON));
+
         if (saveFileDialog.ShowModal() == wxID_CANCEL)
             return;
 
@@ -250,6 +253,7 @@ void MainFrame::SaveFile() {
     }
 
     wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Saving file..."), 100, this);
+    progDia->SetIcon(wxICON(MAINICON));
     progDia->Pulse();
     try {
         SetStrings(filePath, stringList->internalData);
@@ -275,6 +279,7 @@ void MainFrame::OnClose(wxCloseEvent& event) {
     //Need to prompt save if strings have been edited.
     if (stringsEdited) {
         wxMessageDialog messDia(this, "Your changes have not been saved. Do you want to save them before exiting?", "Save changes?", wxCANCEL|wxYES_NO);
+        messDia.SetIcon(wxICON(MAINICON));
 
         int ret = messDia.ShowModal();
 
@@ -373,7 +378,7 @@ void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
 OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
 
     //Set up stuff in the frame.
-    //SetBackgroundColour(*wxWHITE);
+    SetIcon(wxICON(MAINICON));
 
     wxSizer * buttons = CreateSeparatedButtonSizer(wxOK|wxCANCEL);
 
