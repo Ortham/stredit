@@ -33,5 +33,5 @@ Requirements:
 
     mkdir ../../build
     cd ../../build
-    cmake .. -DSTREDIT_ARCH=32 -DSTREDIT_LINK=STATIC -DCMAKE_TOOLCHAIN_FILE=mingw32-toolchain.cmake
+    cmake .. -DSTREDIT_ARCH=32 -DSTREDIT_LINK=STATIC -DCMAKE_SYSTEM_NAME=Windows
     make

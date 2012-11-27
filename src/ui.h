@@ -65,6 +65,7 @@ public:
 
     std::vector<stredit::str_data> internalData;
     std::vector<int> filter;
+	int currentSelectionIndex;
 protected:
     wxString OnGetItemText(long item, long column) const;
     wxListItemAttr * OnGetItemAttr(long item) const;

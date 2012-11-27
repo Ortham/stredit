@@ -1,4 +1,4 @@
-/*  StrEdit
+﻿/*  StrEdit
 
     A STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators.
 
@@ -43,8 +43,7 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_MENU ( wxID_HELP , MainFrame::OnViewReadme )
     EVT_MENU ( wxID_ABOUT , MainFrame::OnAbout )
 
-    EVT_LIST_ITEM_SELECTED ( LIST_Strings , MainFrame::OnStringSelect)
-    EVT_LIST_ITEM_DESELECTED ( LIST_Strings , MainFrame::OnStringDeselect)
+    EVT_LIST_ITEM_SELECTED ( LIST_Strings , MainFrame::OnStringSelect )
 
     EVT_TEXT_ENTER ( SEARCH_Strings, MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_SEARCH_BTN ( SEARCH_Strings , MainFrame::OnStringFilter )
@@ -88,7 +87,7 @@ bool StrEditApp::OnInit() {
     return true;
 }
 
-VirtualList::VirtualList(wxWindow * parent, wxWindowID id) : wxListCtrl(parent, id, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL) {
+VirtualList::VirtualList(wxWindow * parent, wxWindowID id) : wxListCtrl(parent, id, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL), currentSelectionIndex(-1) {
     attr = new wxListItemAttr();
 }
 
@@ -110,6 +109,9 @@ wxString VirtualList::OnGetItemText(long item, long column) const {
 }
 
 wxListItemAttr * VirtualList::OnGetItemAttr(long item) const {
+	if (!filter.empty())
+        item = filter[item];
+
     if (internalData[item].edited)
         attr->SetTextColour(*wxRED);
     else
@@ -328,25 +330,29 @@ void MainFrame::OnAbout(wxCommandEvent& event) {
 
 
 void MainFrame::OnStringSelect(wxListEvent& event) {
+
+	if (stringList->currentSelectionIndex != -1) {
+
+		wxString currStr = stringList->internalData[stringList->currentSelectionIndex].newString;
+		wxString newStr = newTextBox->GetValue();
+
+		if (currStr != newStr) {
+			stringsEdited = true;
+			stringList->internalData[stringList->currentSelectionIndex].newString = newStr.ToUTF8();
+			stringList->internalData[stringList->currentSelectionIndex].edited = true;
+			stringList->RefreshItems(0, stringList->GetItemCount() - 1);
+		}
+	}
+	if (stringList->filter.empty())
+		stringList->currentSelectionIndex = event.GetIndex();
+	else
+		stringList->currentSelectionIndex = stringList->filter[event.GetIndex()];
+
     //Load the selected strings.
-    str_data data = stringList->internalData[event.GetIndex()];
+    str_data data = stringList->internalData[stringList->currentSelectionIndex];
 
     originalTextBox->SetValue(FromUTF8(data.oldString));
     newTextBox->SetValue(FromUTF8(data.newString));
-}
-
-void MainFrame::OnStringDeselect(wxListEvent& event) {
-    //Apply the text in the newTextBox to the fourth column of the string list.
-    //If the new text does not match the old text, set its colour to red.
-    wxString currStr = stringList->internalData[event.GetIndex()].newString;
-    wxString newStr = newTextBox->GetValue();
-
-    if (currStr != newStr) {
-        stringsEdited = true;
-        stringList->internalData[event.GetIndex()].newString = newStr.ToUTF8();
-        stringList->internalData[event.GetIndex()].edited = true;
-        stringList->SetItem(event.GetIndex(), 3, newStr);
-    }
 }
 
 void MainFrame::OnStringFilter(wxCommandEvent& event) {
