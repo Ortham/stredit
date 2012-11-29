@@ -33,13 +33,13 @@ using boost::locale::translate;
 
 namespace stredit {
     //String file reading.
-    void GetStrings(const std::string path, boost::unordered_map<uint32_t, std::string>& stringMap) {
+    void GetStrings(const std::string path, const int fallbackEnc, boost::unordered_map<uint32_t, std::string>& stringMap) {
         uint32_t ret;
         strings_handle sh;
         string_data * strings;
         size_t numStrings = 0;
 
-        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
+        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()), fallbackEnc);
 
         if (ret != LIBSTRINGS_OK)
             throw runtime_error(translate("Could not open strings file."));
@@ -57,13 +57,13 @@ namespace stredit {
         CloseStringsFile(sh);
     }
 
-    void GetStrings(const std::string path, std::vector<str_data>& stringList) {
+    void GetStrings(const std::string path, const int fallbackEnc, std::vector<str_data>& stringList) {
         uint32_t ret;
         strings_handle sh;
         string_data * strings;
         size_t numStrings = 0;
 
-        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
+        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()), fallbackEnc);
 
         if (ret != LIBSTRINGS_OK)
             throw runtime_error(translate("Could not open strings file."));
@@ -91,7 +91,7 @@ namespace stredit {
         string_data * strings;
         size_t numStrings;
 
-        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()));
+        ret = OpenStringsFile(&sh, reinterpret_cast<const uint8_t *>(path.c_str()), 1252);
 
         if (ret != LIBSTRINGS_OK)
             throw runtime_error(translate("Could not open strings file."));

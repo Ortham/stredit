@@ -188,6 +188,9 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     string sourcePath = od->GetSourcePath().ToUTF8().data();
     string transPath = od->GetTransPath().ToUTF8().data();
     string newSourcePath = od->GetNewSourcePath().ToUTF8().data();
+    int sourceFallbackEnc = od->GetSourceFallbackEnc();
+    int transFallbackEnc = od->GetTransFallbackEnc();
+    int newSourceFallbackEnc = od->GetNewSourceFallbackEnc();
     od->Destroy();
 
     if (sourcePath.empty()) {
@@ -212,17 +215,17 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     try {
         if (transPath.empty() && newSourcePath.empty()) {
             //Only one file.
-            GetStrings(sourcePath, stringList->internalData);
+            GetStrings(sourcePath, sourceFallbackEnc, stringList->internalData);
         } else {
             //Two or three files.
             boost::unordered_map<uint32_t, std::string> sourceMap;
             boost::unordered_map<uint32_t, std::string> transMap;
-            GetStrings(sourcePath, sourceMap);
-            GetStrings(transPath, transMap);
+            GetStrings(sourcePath, sourceFallbackEnc, sourceMap);
+            GetStrings(transPath, transFallbackEnc, transMap);
             TwoStringMatching(sourceMap, transMap, stringList->internalData);
             if (!newSourcePath.empty()) {
                 boost::unordered_map<uint32_t, std::string> newSourceMap;
-                GetStrings(newSourcePath, newSourceMap);
+                GetStrings(newSourcePath, newSourceFallbackEnc, newSourceMap);
                 UpdateStringIDs(newSourceMap, stringList->internalData);
             }
         }
@@ -238,10 +241,12 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     progDia->Pulse();
     sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
     progDia->Pulse();
-    stringList->SetItemCount(stringList->internalData.size());
-    progDia->Destroy();
-    SetStatusText(wxString::Format(wxT("%i strings"), stringList->internalData.size()));
+    size_t listSize = stringList->internalData.size();
+    stringList->SetItemCount(listSize);
+    stringList->RefreshItems(0, listSize - 1);
+    SetStatusText(wxString::Format(wxT("%i strings"), listSize));
     SetTitle("StrEdit : " + sourcePath);
+    progDia->Destroy();
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {
@@ -397,6 +402,11 @@ void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
 
 OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
 
+    wxString encs[] = {
+      "Windows-1251",
+      "Windows-1252"
+    };
+
     //Set up stuff in the frame.
     SetIcon(wxICON(MAINICON));
 
@@ -411,14 +421,21 @@ OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) 
     tarPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
     refPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
 
+    orgFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 2, encs);
+    refFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 2, encs);
+    tarFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 2, encs);
+
     orgBox->Add(new wxStaticText(this, wxID_ANY, translate("Source file")), 1, wxEXPAND|wxLEFT|wxALL, 5);
-    orgBox->Add(orgPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
+    orgBox->Add(orgPicker, 0, wxCENTER|wxALL, 5);
+    orgBox->Add(orgFallbackEncChoice, 0, wxRIGHT|wxALL, 5);
 
     tarBox->Add(new wxStaticText(this, wxID_ANY, translate("Translation file (optional)")), 1, wxEXPAND|wxLEFT|wxALL, 5);
-    tarBox->Add(tarPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
+    tarBox->Add(tarPicker, 0, wxCENTER|wxALL, 5);
+    tarBox->Add(tarFallbackEncChoice, 0, wxRIGHT|wxALL, 5);
 
     refBox->Add(new wxStaticText(this, wxID_ANY, translate("Updated source file (optional)")), 1, wxEXPAND|wxLEFT|wxALL, 5);
-    refBox->Add(refPicker, 1, wxEXPAND|wxRIGHT|wxALL, 5);
+    refBox->Add(refPicker, 0, wxCENTER|wxALL, 5);
+    refBox->Add(refFallbackEncChoice, 0, wxRIGHT|wxALL, 5);
 
     bigBox->Add(orgBox, 1, wxEXPAND|wxALL, 5);
     bigBox->Add(tarBox, 1, wxEXPAND|wxALL, 5);
@@ -427,6 +444,11 @@ OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) 
 
     //Now set the layout and sizes.
     SetSizerAndFit(bigBox);
+
+    //Set default fallback encodings.
+    orgFallbackEncChoice->SetSelection(1);
+    refFallbackEncChoice->SetSelection(1);
+    tarFallbackEncChoice->SetSelection(1);
 }
 
 wxString OpenDialog::GetSourcePath() const {
@@ -441,3 +463,26 @@ wxString OpenDialog::GetNewSourcePath() const {
     return refPicker->GetPath();
 }
 
+int OpenDialog::GetSourceFallbackEnc() const {
+    int ret = orgFallbackEncChoice->GetSelection();
+    if (ret == wxNOT_FOUND)
+        return ret;
+    else
+        return 1251 + ret;
+}
+
+int OpenDialog::GetTransFallbackEnc() const {
+    int ret = tarFallbackEncChoice->GetSelection();
+    if (ret == wxNOT_FOUND)
+        return ret;
+    else
+        return 1251 + ret;
+}
+
+int OpenDialog::GetNewSourceFallbackEnc() const {
+    int ret = refFallbackEncChoice->GetSelection();
+    if (ret == wxNOT_FOUND)
+        return ret;
+    else
+        return 1251 + ret;
+}

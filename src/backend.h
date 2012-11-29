@@ -43,14 +43,14 @@ namespace stredit {
     };
 
     //Some global constants.
-    const std::string readme_path = "Docs/readme.html";
+    const std::string readme_path = "Docs/StrEdit Readme.html";
     const std::string version_string = "0.1.0";
     const std::string prog_filename = "StrEdit.exe";
 
     //String file reading/writing. These could be replaced by a more optimised
     //per-string editing system once everything is working.
-    void GetStrings(const std::string path,       boost::unordered_map<uint32_t, std::string>& stringMap);
-    void GetStrings(const std::string path,       std::vector<str_data>& stringList);
+    void GetStrings(const std::string path, const int fallbackEnc, boost::unordered_map<uint32_t, std::string>& stringMap);
+    void GetStrings(const std::string path, const int fallbackEnc, std::vector<str_data>& stringList);
     void SetStrings(const std::string path, const std::vector<str_data>& stringList);
 
     //Matches the strings of map1 and map2 up using their IDs, and outputs the
