@@ -50,6 +50,11 @@
     <li><b>Source and Translation files.</b> The original strings are obtained from the source file, and the translated strings are obtained from the translation file. The strings are matched up using their IDs, so this option should only be used when updating a translation file using the same version of the source file as was used to create it.
     <li><b>Source, Translation and Updated Source files.</b> The original strings and string IDs are obtained from the updated source file, and the translated strings are obtained from the translation file. The strings are first matched between the source and translation files using their IDs. The source and updated source strings are then matched by looking for exact matches or, if no exact match is found, by looking for the closest inexact match (known as a 'fuzzy' match). This option should be used when updating a translation file using a source file that has changed since the translation file was created.
 </ul>
+<p>The drop-down menus to the right of the file pickers are for selecting the fall-back encoding that should be used when reading the strings files. The strings files are assumed to contain strings encoded in UTF-8, but if a string is not valid when read as UTF-8, the fall-back encoding will be used. The encodings available for selection are:
+<ul>
+    <li><b>Windows-1252.</b> This is the default and should be used for all strings files except those that are for Cyrillic alphabet languages, such as Russian.
+    <li><b>Windows-1251.</b> This should be used for strings files that are for Cyrillic alphabet languages, such as Russian.
+</ul>
 <p>The following example should hopefully clarify any confusion arising from the above:
 <blockquote>
 <p>Alice releases v1.0 of AliceMod, which consists of AliceMod.esp and AliceMod_English.STRINGS.
@@ -82,7 +87,19 @@
 <p>StrEdit is copyright &copy 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSES</q> file.
 
 <h2 id="history">Version History</h2>
-<h3>v0.1.0 - <i>November 2012</i></h3>
+<h3>v0.2.0 - <i>29 November 2012</i></h3>
+<ul>
+    <li>The number of filtered strings is now given in the status bar when a filter is applied.
+    <li>Added error messages for when an invalid combination of files is opened.
+    <li>libstrings updated to v1.1:
+    <ul>
+        <li>Strings file encodings are now handled correctly.
+        <li>Strings file extension checks are now case-insensitive, fixing an issue where files extracted from
+        BSAs could not be opened.
+    </ul>
+    <li>Added fall-back encoding selection to the Open File(s) dialog.
+</ul>
+<h3>v0.1.0 - <i>27 November 2012</i></h3>
 <ul>
     <li>Initial release.
 </ul>
