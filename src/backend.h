@@ -1,7 +1,6 @@
 /*  StrEdit
 
-    A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod
-    translators.
+    A minimalist TES V: Skyrim string table editor designed for mod translators.
 
     Copyright (C) 2012    WrinklyNinja
 

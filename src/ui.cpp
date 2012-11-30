@@ -1,7 +1,6 @@
-﻿/*  StrEdit
+/*  StrEdit
 
-    A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod
-    translators.
+    A minimalist TES V: Skyrim string table editor designed for mod translators.
 
     Copyright (C) 2012    WrinklyNinja
 
@@ -114,7 +113,7 @@ wxListItemAttr * VirtualList::OnGetItemAttr(long item) const {
         item = filter[item];
 
     if (internalData[item].edited)
-        attr->SetTextColour(*wxRED);
+        attr->SetTextColour(*wxBLUE);
     else
         attr->SetTextColour(*wxBLACK);
     return attr;

@@ -19,9 +19,32 @@
     a[href^="http"]:after {padding-left:2px; content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);}
     img{display:block;margin:1em;}
 </style>
+<!--
+    StrEdit
+
+    A minimalist TES V: Skyrim string table editor designed for mod translators.
+
+    Copyright (C) 2012    WrinklyNinja
+
+    This file is part of StrEdit.
+
+    StrEdit is free software: you can redistribute
+    it and/or modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation, either version 3 of
+    the License, or (at your option) any later version.
+
+    StrEdit is distributed in the hope that it will
+    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with StrEdit.  If not, see
+    <http://www.gnu.org/licenses/>.
+-->
 
 <h1>StrEdit</h1>
-<p>A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators.
+<p>A minimalist TES V: Skyrim string table editor designed for mod translators.
 
 <h2>Contents</h2>
 <ol>
@@ -34,8 +57,8 @@
 </ol>
 
 <h2 id="intro">Introduction</h2>
-<p>StrEdit is a minimalistic editor of the .STRINGS, .ILSTRINGS and .DLSTRINGS files that TES V: Skyrim plugins use to provide support for multiple languages. StrEdit can be used to create or update translations of strings files, without requiring their associated plugin to be present.
-<p>StrEdit does not contain any plugin localisation or delocalisation functionality, ie. you need to create the strings files before StrEdit can be used to edit them. <a href="http://skyrim.nexusmods.com/mods/25859/">TES5Edit</a> is recommended for doing that.
+<p>StrEdit is a minimalist editor of the string table files that TES V: Skyrim plugins use to provide support for multiple languages. StrEdit can be used to create or update translations of string tables, without requiring their associated plugin to be present.
+<p>StrEdit does not contain any plugin localisation or delocalisation functionality, ie. you need to create the string tables before StrEdit can be used to edit them. <a href="http://skyrim.nexusmods.com/mods/25859/">TES5Edit</a> is recommended for doing that.
 
 <h2 id="install">Installation &amp; Uninstallation</h2>
 <p>To install, extract the <q>StrEdit</q> folder from the downloaded archive to a location of your choice.
@@ -44,26 +67,26 @@
 <h2 id="usage">Usage</h2>
 <p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. On launch, the <q>Open File(s)...</q> dialog, shown below, is displayed.
 <img alt="open files" src="images/open-files.png"/>
-<p>There are three ways for StrEdit to load translation files, based on what combination of files you open. The valid combinations are:
+<p>There are three ways for StrEdit to load string tables, based on what combination of files you open. The valid combinations are:
 <ul>
-    <li><b>Source file only.</b> The source file opened will, as the name suggests, be used as the source of the original strings. Use this option if you wish to create a translation strings file from scratch.
+    <li><b>Source file only.</b> The source file opened will, as the name suggests, be used as the source of the original strings. Use this option if you wish to create a translation string table from scratch.
     <li><b>Source and Translation files.</b> The original strings are obtained from the source file, and the translated strings are obtained from the translation file. The strings are matched up using their IDs, so this option should only be used when updating a translation file using the same version of the source file as was used to create it.
     <li><b>Source, Translation and Updated Source files.</b> The original strings and string IDs are obtained from the updated source file, and the translated strings are obtained from the translation file. The strings are first matched between the source and translation files using their IDs. The source and updated source strings are then matched by looking for exact matches or, if no exact match is found, by looking for the closest inexact match (known as a 'fuzzy' match). This option should be used when updating a translation file using a source file that has changed since the translation file was created.
 </ul>
-<p>The drop-down menus to the right of the file pickers are for selecting the fall-back encoding that should be used when reading the strings files. The strings files are assumed to contain strings encoded in UTF-8, but if a string is not valid when read as UTF-8, the fall-back encoding will be used. The encodings available for selection are:
+<p>The drop-down menus to the right of the file pickers are for selecting the fall-back encoding that should be used when reading the string tables. The string tables are assumed to contain strings encoded in UTF-8, but if a string is not valid when read as UTF-8, the fall-back encoding will be used. The encodings available for selection are:
 <ul>
-    <li><b>Windows-1252.</b> This is the default and should be used for all strings files except those that are for Cyrillic alphabet languages, such as Russian.
-    <li><b>Windows-1251.</b> This should be used for strings files that are for Cyrillic alphabet languages, such as Russian.
+    <li><b>Windows-1252.</b> This is the default and should be used for all string tables except those that are for Cyrillic alphabet languages, such as Russian.
+    <li><b>Windows-1251.</b> This should be used for string tables that are for Cyrillic alphabet languages, such as Russian.
 </ul>
 <p>The following example should hopefully clarify any confusion arising from the above:
 <blockquote>
-<p>Alice releases v1.0 of AliceMod, which consists of AliceMod.esp and AliceMod_English.STRINGS.
-<p>Bob decides that he wants to translate AliceMod into German, so he opens AliceMod_English.STRINGS in StrEdit as the source file. After translating half the strings, he gets bored and decides to finish the translation later, so closes StrEdit, saving his changes as AliceMod_German.STRINGS.
-<p>When Bob goes back to finish off the translation, he opens AliceMod_English.STRINGS and AliceMod_German.STRINGS in StrEdit as the source and translation files respectively. He then finishes the translation, saving it once more as AliceMod_German.STRINGS.
-<p>Alice then releases v1.1 of AliceMod, which adds some new strings and some fixes to typos that were present in v1.0. Because the strings file in v1.1 is not the same as the strings file in v1.0, Bob must update his translation before he can use it with v1.1.
-<p>Bob opens the v1.0 AliceMod_English.STRINGS and AliceMod_German.STRINGS and the v1.1 AliceMod_English.STRINGS in StrEdit as the source, translation and updated source files respectively. Because the strings with the fixed typos are not exactly the same as the strings in the v1.0 source file, StrEdit will match them inexactly with the existing translations. Bob then checks that these matches are correct, making any changes if required, and adds translations for the new strings. He then saves his translation again as AliceMod_German.STRINGS, and can now use his translation with AliceMod v1.1.
+<p>Alice releases v1.0 of AliceMod, which consists of AliceMod.esp and AliceMod_English.strings.
+<p>Bob decides that he wants to translate AliceMod into German, so he opens AliceMod_English.strings in StrEdit as the source file. After translating half the strings, he gets bored and decides to finish the translation later, so closes StrEdit, saving his changes as AliceMod_German.strings.
+<p>When Bob goes back to finish off the translation, he opens AliceMod_English.strings and AliceMod_German.strings in StrEdit as the source and translation files respectively. He then finishes the translation, saving it once more as AliceMod_German.strings.
+<p>Alice then releases v1.1 of AliceMod, which adds some new strings and some fixes to typos that were present in v1.0. Because the string table in v1.1 is not the same as the string table in v1.0, Bob must update his translation before he can use it with v1.1.
+<p>Bob opens the v1.0 AliceMod_English.strings and AliceMod_German.strings and the v1.1 AliceMod_English.strings in StrEdit as the source, translation and updated source files respectively. Because the strings with the fixed typos are not exactly the same as the strings in the v1.0 source file, StrEdit will match them inexactly with the existing translations. Bob then checks that these matches are correct, making any changes if required, and adds translations for the new strings. He then saves his translation again as AliceMod_German.strings, and can now use his translation with AliceMod v1.1.
 </blockquote>
-<p>Once StrEdit has opened the strings file(s) selected, it will display its main window:
+<p>Once StrEdit has opened the file(s) selected, it will display its main window:
 <img alt="main window" src="images/main.png"/>
 <p>The main window consists of four primary elements:
 <table>
@@ -71,7 +94,7 @@
         <tr><th>Element<th>Description
     <tbody>
         <tr><td>Filter Box<td>This box can be used to filter the list of strings. Entering text into this box then pressing <q>Enter</q> or clicking the magnifying glass icon will filter out any rows in the String List that do not have original strings that start with the same text. Clicking the cancel icon or clearing the text then pressing enter or clicking the magnifying glass icon will remove the filter. The status bar will give a count of how many strings are being filtered when a filter is applied.
-        <tr><td>String List<td>This is the list of all the strings in the loaded source string file. Clicking on a row will put its original and new strings into their respective boxes. For rows that contain an original and new string that were matched inexactly, the <q>Fuzzy</q> column will be ticked.
+        <tr><td>String List<td>This is the list of all the strings in the loaded source string table. Clicking on a row will put its original and new strings into their respective boxes. For rows that contain an original and new string that were matched inexactly, the <q>Fuzzy</q> column will be ticked. Rows which have had their new string edited are highlighted in blue.
         <tr><td>Original String Box<td>Displays the text in the <q>Original String</q> column of the selected row. This text is non-editable.
         <tr><td>New String Box<td>When a row is selected, this box is filled with the text in its <q>New String</q> column. Any edits made are applied to that row when another row is selected.
 </table>
@@ -84,18 +107,22 @@
 <p>StrEdit is written in C++ and makes use of the <a href="http://www.boost.org/">Boost</a>, <a href="http://www.wxwidgets.org/">wxWidgets</a> and <a href="http://github.com/WrinklyNinja/libstrings">libstrings</a> libraries. Without them, it would not exist.
 
 <h2 id="license">License</h2>
-<p>StrEdit is copyright &copy 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSES</q> file.
+<p>StrEdit is copyright &copy; 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSES</q> file.
 
 <h2 id="history">Version History</h2>
+<h3>v0.2.1 - <i>December 2012</i></h3>
+<ul>
+    <li>Edited rows are now highlighted in blue, not red.
+    <li>libstrings updated to v1.1.1, fixing an extra string being displayed for most strings tables.
+</ul>
 <h3>v0.2.0 - <i>29 November 2012</i></h3>
 <ul>
     <li>The number of filtered strings is now given in the status bar when a filter is applied.
-    <li>Added error messages for when an invalid combination of files is opened.
+    <li>Added error messages for when an invalid combination of tables is opened.
     <li>libstrings updated to v1.1:
     <ul>
-        <li>Strings file encodings are now handled correctly.
-        <li>Strings file extension checks are now case-insensitive, fixing an issue where files extracted from
-        BSAs could not be opened.
+        <li>String table encodings are now handled correctly.
+        <li>String table extension checks are now case-insensitive, fixing an issue where tables previously extracted from BSAs could not be opened.
     </ul>
     <li>Added fall-back encoding selection to the Open File(s) dialog.
 </ul>
