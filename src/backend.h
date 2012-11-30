@@ -43,7 +43,7 @@ namespace stredit {
 
     //Some global constants.
     const std::string readme_path = "Docs/StrEdit Readme.html";
-    const std::string version_string = "0.2.0";
+    const std::string version_string = "0.2.1";
     const std::string prog_filename = "StrEdit.exe";
 
     //String file reading/writing. These could be replaced by a more optimised
