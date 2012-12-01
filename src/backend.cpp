@@ -45,8 +45,10 @@ namespace stredit {
 
         ret = GetStrings(sh, &strings, &numStrings);
 
-        if (ret != LIBSTRINGS_OK)
+        if (ret != LIBSTRINGS_OK) {
+            CloseStringsFile(sh);
             throw runtime_error(translate("Could not read strings file."));
+        }
 
         stringMap.clear();
         for (size_t i=0; i < numStrings; ++i) {
@@ -69,8 +71,10 @@ namespace stredit {
 
         ret = GetStrings(sh, &strings, &numStrings);
 
-        if (ret != LIBSTRINGS_OK)
+        if (ret != LIBSTRINGS_OK) {
+            CloseStringsFile(sh);
             throw runtime_error(translate("Could not read strings file."));
+        }
 
         stringList.clear();
         for (size_t i=0; i < numStrings; ++i) {
@@ -117,13 +121,17 @@ namespace stredit {
             delete [] strings[i].data;
         delete [] strings;
 
-        if (ret != LIBSTRINGS_OK)
+        if (ret != LIBSTRINGS_OK) {
+            CloseStringsFile(sh);
             throw runtime_error(translate("Could not set new strings."));
+        }
 
         ret = SaveStringsFile(sh, reinterpret_cast<const uint8_t *>(path.c_str()));
 
-        if (ret != LIBSTRINGS_OK)
+        if (ret != LIBSTRINGS_OK) {
+            CloseStringsFile(sh);
             throw runtime_error(translate("Could not write strings file."));
+        }
 
         CloseStringsFile(sh);
     }

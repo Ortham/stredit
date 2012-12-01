@@ -34,7 +34,7 @@
 #include <wx/splitter.h>
 
 BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
-    EVT_CLOSE (MainFrame::OnClose )
+    EVT_CLOSE ( MainFrame::OnClose )
 
     EVT_MENU ( wxID_OPEN , MainFrame::OnOpenFile )
     EVT_MENU ( wxID_SAVE , MainFrame::OnSaveFile )
@@ -48,6 +48,10 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_TEXT_ENTER ( SEARCH_Strings, MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_SEARCH_BTN ( SEARCH_Strings , MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_CANCEL_BTN ( SEARCH_Strings , MainFrame::OnStringFilterCancel )
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE ( VirtualList, wxListCtrl )
+    EVT_CLOSE (VirtualList::OnClose )
 END_EVENT_TABLE()
 
 IMPLEMENT_APP(StrEditApp)
@@ -119,6 +123,11 @@ wxListItemAttr * VirtualList::OnGetItemAttr(long item) const {
     return attr;
 }
 
+void VirtualList::OnClose(wxCloseEvent& event) {
+    delete attr;
+    Destroy();
+}
+
 MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize), stringsEdited(false) {
     //Set up menu bar first.
     wxMenuBar * MenuBar = new wxMenuBar();
@@ -181,8 +190,10 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
 
     OpenDialog * od = new OpenDialog(this, wxID_ANY, translate("Open File(s)..."));
 
-    if (od->ShowModal() != wxID_OK)
+    if (od->ShowModal() != wxID_OK) {
+        od->Destroy();
         return;
+    }
 
     string sourcePath = od->GetSourcePath().ToUTF8().data();
     string transPath = od->GetTransPath().ToUTF8().data();
@@ -208,9 +219,9 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
         return;
     }
 
-    wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Opening file..."), 100, this);
-    progDia->SetIcon(wxICON(MAINICON));
-    progDia->Pulse();
+    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Opening file..."), 100, this, wxPD_APP_MODAL);
+    progDia.SetIcon(wxICON(MAINICON));
+    progDia.Pulse();
     try {
         if (transPath.empty() && newSourcePath.empty()) {
             //Only one file.
@@ -228,8 +239,7 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
                 UpdateStringIDs(newSourceMap, stringList->internalData);
             }
         }
-    } catch (runtime_error& e) {
-        progDia->Destroy();
+   } catch (runtime_error& e) {
         wxMessageBox(
             FromUTF8(e.what()),
             translate("StrEdit: Error"),
@@ -237,15 +247,23 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
             this);
         return;
     }
-    progDia->Pulse();
+    progDia.Pulse();
     sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
-    progDia->Pulse();
+    progDia.Pulse();
     size_t listSize = stringList->internalData.size();
     stringList->SetItemCount(listSize);
     stringList->RefreshItems(0, listSize - 1);
+    //Reset everything.
+    stringList->filter.clear();
+    stringList->currentSelectionIndex = -1;
+    searchBox->Clear();
+    originalTextBox->Clear();
+    newTextBox->Clear();
+    stringsEdited = false;
+    if (!transPath.empty())
+        filePath = transPath;
     SetStatusText(wxString::Format(wxT("%i strings"), listSize));
     SetTitle("StrEdit : " + sourcePath);
-    progDia->Destroy();
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {

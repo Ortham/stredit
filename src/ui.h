@@ -63,6 +63,8 @@ class VirtualList : public wxListCtrl {
 public:
     VirtualList(wxWindow * parent, wxWindowID id);
 
+    void OnClose(wxCloseEvent& event);
+
     std::vector<stredit::str_data> internalData;
     std::vector<int> filter;
     int currentSelectionIndex;
@@ -70,7 +72,8 @@ protected:
     wxString OnGetItemText(long item, long column) const;
     wxListItemAttr * OnGetItemAttr(long item) const;
     wxListItemAttr * attr;
-private:
+
+    DECLARE_EVENT_TABLE()
 };
 
 //Main window class.
