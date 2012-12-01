@@ -343,7 +343,7 @@ void MainFrame::OnAbout(wxCommandEvent& event) {
     wxAboutDialogInfo aboutInfo;
     aboutInfo.SetName("StrEdit");
     aboutInfo.SetVersion(version_string);
-    aboutInfo.SetDescription(translate("A minimalistic STRINGS, ILSTRINGS and DLSTRINGS file editor designed for mod translators."));
+    aboutInfo.SetDescription(translate("A minimalist TES V: Skyrim string table editor designed for mod translators."));
     aboutInfo.SetCopyright("Copyright (C) 2012 WrinklyNinja.");
     aboutInfo.SetWebSite("http://github.com/WrinklyNinja/stredit");
     aboutInfo.SetLicence("This program is free software: you can redistribute it and/or modify\n"
