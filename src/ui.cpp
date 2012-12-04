@@ -80,6 +80,7 @@ namespace stredit {
 
 //Draws the main window when program starts.
 bool StrEditApp::OnInit() {
+    //Initialise main window.
     MainFrame *frame = new MainFrame(wxT("StrEdit"));
     frame->Show(true);
     SetTopWindow(frame);
@@ -262,6 +263,8 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     stringsEdited = false;
     if (!transPath.empty())
         filePath = transPath;
+    else
+        filePath.clear();
     SetStatusText(wxString::Format(wxT("%i strings"), listSize));
     SetTitle("StrEdit : " + sourcePath);
 }
