@@ -371,11 +371,11 @@ void MainFrame::OnStringSelect(wxListEvent& event) {
     if (stringList->currentSelectionIndex != -1) {
 
         wxString currStr = stringList->internalData[stringList->currentSelectionIndex].newString;
-        wxString newStr = newTextBox->GetValue();
+        wxString newStr = newTextBox->GetValue().ToUTF8();
 
         if (currStr != newStr) {
             stringsEdited = true;
-            stringList->internalData[stringList->currentSelectionIndex].newString = newStr.ToUTF8();
+            stringList->internalData[stringList->currentSelectionIndex].newString = newStr;
             stringList->internalData[stringList->currentSelectionIndex].edited = true;
             stringList->RefreshItems(0, stringList->GetItemCount() - 1);
         }
