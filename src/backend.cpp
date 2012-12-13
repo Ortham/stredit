@@ -154,35 +154,41 @@ namespace stredit {
         }
     }
 
-    //Updates the IDs of stringList elements by matching their oldStrings to the strings of map1.
-    //If an exact match cannot be found, then Levenstein matching is used and the lDist
-    //updated to reflect the distance of the chosen match.
-    void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& oldOrigStrMap,
+    //We have 3 tables: two are associated in the stringList, and the third is in the map.
+    //The two associated tables might be very similar or very different in content (including size),
+    //compared to the map. As the map holds the 'updated' source, we want to match translations to
+    //the updated source, rather than match the updated source to the translations.
+    //Matching is performed by comparing the strings of the map and the oldStrings in the list.
+    //If an exact match is not found, then closest Levenshtein match is used, and the 'fuzzy' flag is
+    //set.
+    void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& newSourceMap,
                          std::vector<str_data>& stringList) {
-        for (std::vector<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
+        std::vector<str_data> newStrList;
+        for (boost::unordered_map<uint32_t, std::string>::const_iterator it=newSourceMap.begin(), endIt=newSourceMap.end(); it != endIt; ++it) {
             int leastLDist = -1;
-            string oldStr = it->oldString;
-            for (boost::unordered_map<uint32_t, std::string>::const_iterator itr=oldOrigStrMap.begin(), endItr=oldOrigStrMap.end(); itr != endItr; ++itr) {
-                if (itr->second == oldStr) {
-                    it->id = itr->first;
-                    it->oldString = itr->second;
-                    it->fuzzy = false;
+            std::vector<str_data>::const_iterator bestMatch = stringList.end();
+            for (std::vector<str_data>::const_iterator jt=stringList.begin(), endJt=stringList.end(); jt != endJt; ++jt) {
+                if (it->second == jt->oldString) {
+                    bestMatch = jt;
+                    leastLDist = 0;
                     break;
                 } else {
-                    //Levenshtein match.
-                    //Get the Levenshtein distance of the two strings, compare
-                    //to the previously-obtained distance (if exists). If smaller,
-                    //store the current string.
-                    int lDist = Levenshtein(oldStr, itr->second);
+                    int lDist = Levenshtein(it->second, jt->oldString);
                     if (leastLDist == -1 || leastLDist > lDist) {
-                        it->id = itr->first;
-                        it->oldString = itr->second;
-                        it->fuzzy = true;
+                        bestMatch = jt;
                         leastLDist = lDist;
                     }
                 }
             }
+            //bestMatch now points to the best matching element of stringList.
+            str_data data;
+            data.fuzzy = (leastLDist != 0);
+            data.id = it->first;
+            data.oldString = it->second;
+            data.newString = bestMatch->newString;
+            newStrList.push_back(data);
         }
+        stringList = newStrList;
     }
 
     //Explicit memory management, need to call delete on the output when finished with it.
