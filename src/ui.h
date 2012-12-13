@@ -91,6 +91,7 @@ public:
     void OnStringDeselect(wxListEvent& event);
     void OnStringFilter(wxCommandEvent& event);
     void OnStringFilterCancel(wxCommandEvent& event);
+    void OnKeyDown(wxKeyEvent& event);
 
     void SaveFile();
 private:

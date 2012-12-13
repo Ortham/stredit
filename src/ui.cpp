@@ -48,6 +48,8 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_TEXT_ENTER ( SEARCH_Strings, MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_SEARCH_BTN ( SEARCH_Strings , MainFrame::OnStringFilter )
     EVT_SEARCHCTRL_CANCEL_BTN ( SEARCH_Strings , MainFrame::OnStringFilterCancel )
+
+    EVT_CHAR_HOOK ( MainFrame::OnKeyDown )
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE ( VirtualList, wxListCtrl )
@@ -418,6 +420,15 @@ void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
     stringList->SetItemCount(itemCount);
     stringList->RefreshItems(0, itemCount - 1);
     SetStatusText(wxString::Format(wxT("%i strings"), stringList->internalData.size()));
+}
+
+void MainFrame::OnKeyDown(wxKeyEvent& event) {
+    if (event.AltDown() && event.GetKeyCode() == 'C') {
+        //Fast copy/paste.
+        newTextBox->SetValue(originalTextBox->GetValue());
+        newTextBox->SetFocus();
+    }
+    event.Skip();
 }
 
 OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
