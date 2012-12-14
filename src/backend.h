@@ -51,17 +51,23 @@ namespace stredit {
     void GetStrings(const std::string path, const int fallbackEnc, std::vector<str_data>& stringList);
     void SetStrings(const std::string path, const std::vector<str_data>& stringList);
 
+    //Matches the strings in the maps by their IDs. Any IDs which are not present in both maps
+    //are not included in the output. The passed vector has its contents appended to, not replaced.
+    void BuildStringPairs(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
+                          const boost::unordered_map<uint32_t, std::string>& targetStrMap,
+                                boost::unordered_map<std::string, std::string>& stringMap);
+
     //Matches the strings of map1 and map2 up using their IDs, and outputs the
     //result. The lDist for all matches is 0, as only exact matching is used.
-    void TwoStringMatching(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
-                           const boost::unordered_map<uint32_t, std::string>& targetStrMap,
-                           std::vector<str_data>& stringList);
+    void BuildStringData(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
+                         const boost::unordered_map<uint32_t, std::string>& targetStrMap,
+                               std::vector<str_data>& stringList);
 
-    //Updates the IDs of stringList elements by matching their oldStrings to the strings of map1.
-    //If an exact match cannot be found, then Levenshtein matching is used and the lDist
-    //updated to reflect the distance of the chosen match.
-    void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& oldOrigStrMap,
-                         std::vector<str_data>& stringList);
+    //Fills in the empty newStrings in stringList by finding the closest Levenshtein match between
+    //their corresponding oldStrings and the keys of stringMap, then using the corresponding
+    //mapped string. It also updates the fuzzy data member as necessary.
+    void FuzzyMatchStrings(const boost::unordered_map<std::string, std::string>& stringMap,
+                                 std::vector<str_data>& stringList);
 
     //Some helper functions.
     uint8_t * ToUint8_tString(const std::string str);

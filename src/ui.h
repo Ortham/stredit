@@ -112,18 +112,14 @@ public:
 
     wxString GetSourcePath() const;
     wxString GetTransPath() const;
-    wxString GetNewSourcePath() const;
 
     int GetSourceFallbackEnc() const;
     int GetTransFallbackEnc() const;
-    int GetNewSourceFallbackEnc() const;
 private:
-    wxFilePickerCtrl * orgPicker;
-    wxFilePickerCtrl * refPicker;
-    wxFilePickerCtrl * tarPicker;
-    wxChoice * orgFallbackEncChoice;
-    wxChoice * refFallbackEncChoice;
-    wxChoice * tarFallbackEncChoice;
+    wxFilePickerCtrl * srcPicker;
+    wxFilePickerCtrl * transPicker;
+    wxChoice * srcFallbackEncChoice;
+    wxChoice * transFallbackEncChoice;
 };
 
 #endif

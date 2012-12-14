@@ -136,17 +136,31 @@ namespace stredit {
         CloseStringsFile(sh);
     }
 
+    //Matches the strings in the maps by their IDs. Any IDs which are not present in both maps
+    //are not included in the output. The passed vector has its contents appended to, not replaced.
+    void BuildStringPairs(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
+                           const boost::unordered_map<uint32_t, std::string>& targetStrMap,
+                           boost::unordered_map<std::string, std::string>& stringMap) {
+        boost::unordered_map<uint32_t, std::string>::const_iterator itr;
+        for (boost::unordered_map<uint32_t, std::string>::const_iterator it=originalStrMap.begin(), endIt=originalStrMap.end(); it != endIt; ++it) {
+            itr = targetStrMap.find(it->first);
+            if (itr != targetStrMap.end())
+                stringMap.insert(pair<string, string>(it->second, itr->second));
+        }
+    }
+
     //Matches the strings of map1 and map2 up using their IDs, and outputs the
     //result. The lDist for all matches is 0, as only exact matching is used.
-    void TwoStringMatching(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
+    void BuildStringData(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
                            const boost::unordered_map<uint32_t, std::string>& targetStrMap,
                            std::vector<str_data>& stringList) {
         stringList.clear();
+        boost::unordered_map<uint32_t, std::string>::const_iterator itr;
         for (boost::unordered_map<uint32_t, std::string>::const_iterator it=originalStrMap.begin(), endIt=originalStrMap.end(); it != endIt; ++it) {
             str_data data;
             data.id = it->first;
             data.oldString = it->second;
-            boost::unordered_map<uint32_t, std::string>::const_iterator itr = targetStrMap.find(it->first);
+            itr = targetStrMap.find(it->first);
             if (itr != targetStrMap.end() && it->second != itr->second) {
                 data.newString = itr->second;
             }
@@ -154,41 +168,34 @@ namespace stredit {
         }
     }
 
-    //We have 3 tables: two are associated in the stringList, and the third is in the map.
-    //The two associated tables might be very similar or very different in content (including size),
-    //compared to the map. As the map holds the 'updated' source, we want to match translations to
-    //the updated source, rather than match the updated source to the translations.
-    //Matching is performed by comparing the strings of the map and the oldStrings in the list.
-    //If an exact match is not found, then closest Levenshtein match is used, and the 'fuzzy' flag is
-    //set.
-    void UpdateStringIDs(const boost::unordered_map<uint32_t, std::string>& newSourceMap,
-                         std::vector<str_data>& stringList) {
-        std::vector<str_data> newStrList;
-        for (boost::unordered_map<uint32_t, std::string>::const_iterator it=newSourceMap.begin(), endIt=newSourceMap.end(); it != endIt; ++it) {
-            int leastLDist = -1;
-            std::vector<str_data>::const_iterator bestMatch = stringList.end();
-            for (std::vector<str_data>::const_iterator jt=stringList.begin(), endJt=stringList.end(); jt != endJt; ++jt) {
-                if (it->second == jt->oldString) {
-                    bestMatch = jt;
-                    leastLDist = 0;
-                    break;
-                } else {
-                    int lDist = Levenshtein(it->second, jt->oldString);
-                    if (leastLDist == -1 || leastLDist > lDist) {
-                        bestMatch = jt;
-                        leastLDist = lDist;
+    //Fills in the empty newStrings in stringList by finding the closest Levenshtein match between
+    //their corresponding oldStrings and the keys of stringMap, then using the corresponding
+    //mapped string.
+    void FuzzyMatchStrings(const boost::unordered_map<std::string, std::string>& stringMap,
+                                 std::vector<str_data>& stringList) {
+        boost::unordered_map<std::string, std::string>::const_iterator bestMatch;
+        for (std::vector<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
+            if (it->newString.empty()) {
+                int leastLDist = -1;
+                bestMatch = stringMap.end();
+                for (boost::unordered_map<std::string, std::string>::const_iterator itr=stringMap.begin(), endItr=stringMap.end(); itr != endItr; ++itr) {
+                    if (it->oldString == itr->first) {
+                        bestMatch = itr;
+                        leastLDist = 0;
+                        break;
+                    } else {
+                        int lDist = Levenshtein(it->oldString, itr->first);
+                        if (leastLDist == -1 || leastLDist > lDist) {
+                            bestMatch = itr;
+                            leastLDist = lDist;
+                        }
                     }
                 }
+                //bestMatch now points to the best matching element of stringMap.
+                it->newString = bestMatch->first;
+                it->fuzzy = (leastLDist != 0);
             }
-            //bestMatch now points to the best matching element of stringList.
-            str_data data;
-            data.fuzzy = (leastLDist != 0);
-            data.id = it->first;
-            data.oldString = it->second;
-            data.newString = bestMatch->newString;
-            newStrList.push_back(data);
         }
-        stringList = newStrList;
     }
 
     //Explicit memory management, need to call delete on the output when finished with it.
