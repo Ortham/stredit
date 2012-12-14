@@ -19,6 +19,7 @@
     a:hover {text-decoration:underline;}
     a[href^="http"]:after {padding-left:2px; content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);}
     img{display:block;margin:1em;}
+    kbd {border:3px outset grey; padding:0 2px; background:lightgrey;}
 </style>
 <!--
     StrEdit
@@ -68,26 +69,13 @@
 <h2 id="usage">Usage</h2>
 <p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. On launch, the <q>Open File(s)...</q> dialog, shown below, is displayed.
 <img alt="open files" src="images/open-files.png"/>
-<p>There are three ways for StrEdit to load string tables, based on what combination of files you open. The valid combinations are:
-<ul>
-    <li><b>Source file only.</b> The source file opened will, as the name suggests, be used as the source of the original strings. Use this option if you wish to create a translation string table from scratch.
-    <li><b>Source and Translation files.</b> The original strings are obtained from the source file, and the translated strings are obtained from the translation file. The strings are matched up using their IDs, so this option should only be used when updating a translation file using the same version of the source file as was used to create it.
-    <li><b>Source, Translation and Updated Source files.</b> The original strings and string IDs are obtained from the updated source file, and the translated strings are obtained from the translation file. The strings are first matched between the source and translation files using their IDs. Each updated source string is then matched with a translation string by comparing updated source and source strings. If no exact match is found, by looking for the closest inexact match (known as a 'fuzzy' match). This option should be used when updating a translation file using a source file that has changed since the translation file was created. It can also be used to partially automate a translation using an existing translation of potentially unrelated string tables.
-</ul>
+<p>The translation file is optional, and should be used if updating an existing translation. The source file must always be specified, and if a translation file is also specified, it must be exactly the same file as was used to create the translation from.
 <p>The drop-down menus to the right of the file pickers are for selecting the fall-back encoding that should be used when reading the string tables. The string tables are assumed to contain strings encoded in UTF-8, but if a string is not valid when read as UTF-8, the fall-back encoding will be used. The encodings available for selection are:
 <ul>
     <li><b>Windows-1252.</b> This is the default and should be used for all string tables except those that are for Cyrillic alphabet languages, such as Russian.
     <li><b>Windows-1251.</b> This should be used for string tables that are for Cyrillic alphabet languages, such as Russian.
 </ul>
-<p>The following example should hopefully clarify any confusion arising from the above:
-<blockquote>
-<p>Alice releases v1.0 of AliceMod, which consists of AliceMod.esp and AliceMod_English.strings.
-<p>Bob decides that he wants to translate AliceMod into German, so he opens AliceMod_English.strings in StrEdit as the source file. After translating half the strings, he gets bored and decides to finish the translation later, so closes StrEdit, saving his changes as AliceMod_German.strings.
-<p>When Bob goes back to finish off the translation, he opens AliceMod_English.strings and AliceMod_German.strings in StrEdit as the source and translation files respectively. He then finishes the translation, saving it once more as AliceMod_German.strings.
-<p>Alice then releases v1.1 of AliceMod, which adds some new strings and some fixes to typos that were present in v1.0. Because the string table in v1.1 is not the same as the string table in v1.0, Bob must update his translation before he can use it with v1.1.
-<p>Bob opens the v1.0 AliceMod_English.strings and AliceMod_German.strings and the v1.1 AliceMod_English.strings in StrEdit as the source, translation and updated source files respectively. Because the strings with the fixed typos are not exactly the same as the strings in the v1.0 source file, StrEdit will match them inexactly with the existing translations. Bob then checks that these matches are correct, making any changes if required, and adds translations for the new strings. He then saves his translation again as AliceMod_German.strings, and can now use his translation with AliceMod v1.1.
-<p>Alice then releases a new mod, AliceModExtended, which contains an AliceModExtended_English.strings file. As it uses much of the same text as AliceMod, Bob doesn't want to have to manually re-translate that text. Bob therefore loads AliceMod_English.strings, AliceMod_German.strings and AliceModExtended_English.strings as the source, translation and updated source files respectively. StrEdit then automatically translates the strings in AliceModExtended_English.strings as best it can using the translations provided to it in the other two string tables, and Bob just has to check that the translations are correct and make adjustments where necessary.
-</blockquote>
+
 <p>Once StrEdit has opened the file(s) selected, it will display its main window:
 <img alt="main window" src="images/main.png"/>
 <p>The main window consists of four primary elements:
@@ -101,7 +89,16 @@
         <tr><td>New String Box<td>When a row is selected, this box is filled with the text in its <q>New String</q> column. Any edits made are applied to that row when another row is selected.
 </table>
 <p>To translate the strings, simply select a row, enter your translation into the new string box, then select the next row and repeat until all original strings have been translated. Keyboard navigation using the tab and arrow keys is supported, as are the usual shortcuts for saving and undoing work.
+<p>Selecting a row then pressing <kbd>Alt+C</kbd> will paste the original string into the new string box, then move keyboard focus to it.
 <p>Once you have finished working, select <q>File->Save</q> or <q>File->Save As...</q> to save your work. If you attempt to quit with unsaved work, StrEdit will ask you if you want to save it before quitting. For simplicity and greatest compatibility, StrEdit saves all string tables with their strings encoded in UTF-8.
+
+<h3>Machine Translation</h3>
+<p>StrEdit can be used to perform a machine translation of any untranslated strings in the current file by selecting <q>File->Perform Machine Translation...</q>. This will display the following window:
+<img alt="machine translation window" src="images/vocab-select.png"/>
+<p>The machine translation uses a vocabulary of previously-translated string pairs to find the closest translations for untranslated strings, and it is in this window that you select the pairs of string tables to be used to generate this vocabulary. Clicking on the <q>Add</q> button will display the <q>Open File(s)</q> dialog, in which you may pick a source file and a corresponding translation. Clicking the <q>Remove</q> button will remove the currently-selected row from the file list.
+<p>Once you have selected all the file pairs you wish to use as a vocabulary, click the <q>OK</q> button. StrEdit will then scan through all your untranslated strings, matching each one up to the closest translation available in the vocabulary. If an exact translation cannot be found, then the next-closest match will be used, and the match will be marked as <q>fuzzy</q> in the main window's string list. Note that this step can take a long time, depending on the number of strings to be scanned through and the number of string pairs in the vocabulary.
+<p>Machine translations may be used to quickly perform a rough translation of a string table, or alternatively they can be used to update a translation to match a newer version of its source file. This is done by opening the newer source file in StrEdit's main window, then selecting the old source file and the translation as a vocabulary file pair, and performing a machine translation with them.
+
 
 <h2 id="credits">Credits</h2>
 <p>Thanks go to shadeMe and zilav for answering some questions I had during development.
@@ -112,6 +109,11 @@
 <p>StrEdit is copyright &copy; 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSES</q> file.
 
 <h2 id="history">Version History</h2>
+<h3>v0.3 - <i>14 December 2012</i></h3>
+<ul>
+    <li>Added a quick copy/paste keboard shortcut, Alt+C, that copies the original string of the selected row into the new string text box then moves keyboard focus to it.
+    <li>Implemented vocabulary and machine translation support.
+</ul>
 <h3>v0.2.2 - <i>9 December 2012</i></h3>
 <ul>
     <li>Fixed the path edits are saved to not being reset when a new file is opened.

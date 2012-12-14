@@ -43,7 +43,7 @@ namespace stredit {
 
     //Some global constants.
     const std::string readme_path = "StrEdit Readme.html";
-    const std::string version_string = "0.2.1";
+    const std::string version_string = "0.3.0";
 
     //String file reading/writing. These could be replaced by a more optimised
     //per-string editing system once everything is working.
