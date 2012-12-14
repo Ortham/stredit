@@ -50,7 +50,9 @@ enum {
     //Main window.
     SEARCH_Strings = wxID_HIGHEST + 1, // declares an id which will be used to call our button
     LIST_Strings,
-    MENU_MachineTranslate
+    MENU_MachineTranslate,
+    MENU_ImportXML,
+    MENU_ExportXML
 };
 
 class StrEditApp : public wxApp {
@@ -86,6 +88,9 @@ public:
     void OnClose(wxCloseEvent& event);
     void OnViewReadme(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
+
+    void OnImportXML(wxCommandEvent& event);
+    void OnExportXML(wxCommandEvent& event);
 
     void OnStringSelect(wxListEvent& event);
     void OnStringDeselect(wxListEvent& event);

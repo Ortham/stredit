@@ -25,7 +25,10 @@
 
 #include <libstrings.h>
 #include <stdexcept>
+#include <sstream>
+#include <cstdio>
 #include <boost/locale.hpp>
+#include <tinyxml2.h>
 
 using namespace std;
 using boost::locale::translate;
@@ -134,6 +137,69 @@ namespace stredit {
         }
 
         CloseStringsFile(sh);
+    }
+
+    //Import/Export strings as XML data.
+    void ImportAsXML(const std::string path,       std::vector<str_data>& stringList) {
+        tinyxml2::XMLDocument doc;
+        doc.LoadFile(path.c_str());
+
+        /* XML structure:
+
+        <strings>
+            <string>
+                <id></id>
+                <data></data>
+            </string>
+        </strings>
+
+        <strings> may contain multiple <string> elements. */
+
+        //Need to loop through <string> elements.
+
+        tinyxml2::XMLElement * stringElement = doc.FirstChildElement("strings")->FirstChildElement("string");
+
+        while (stringElement != NULL) {
+            str_data data;
+            data.id = atoi(stringElement->FirstChildElement("id")->FirstChild()->ToText()->Value());
+            data.oldString = stringElement->FirstChildElement("data")->FirstChild()->ToText()->Value();
+            stringList.push_back(data);
+
+            stringElement = stringElement->NextSiblingElement("string");
+        }
+    }
+
+    void ExportAsXML(const std::string path, const std::vector<str_data>& stringList) {
+
+        FILE * fp = fopen(path.c_str(), "w");
+
+        tinyxml2::XMLPrinter printer(fp);
+
+        printer.PushHeader(true, true);
+        printer.OpenElement("strings");
+
+        for (int i=0, max=stringList.size(); i < max; ++i) {
+
+            string id = static_cast<ostringstream*>( &(ostringstream() << stringList[i].id) )->str();
+            string str;
+            if (stringList[i].newString.empty())
+                str = stringList[i].oldString;
+            else
+                str = stringList[i].newString;
+
+            printer.OpenElement("string");
+            printer.OpenElement("id");
+            printer.PushText(id.c_str());
+            printer.CloseElement();
+            printer.OpenElement("data");
+            printer.PushText(str.c_str());
+            printer.CloseElement();
+            printer.CloseElement();
+        }
+
+        printer.CloseElement();
+
+        fclose(fp);
     }
 
     //Matches the strings in the maps by their IDs. Any IDs which are not present in both maps

@@ -43,6 +43,8 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_MENU ( wxID_EXIT , MainFrame::OnQuit )
     EVT_MENU ( wxID_HELP , MainFrame::OnViewReadme )
     EVT_MENU ( wxID_ABOUT , MainFrame::OnAbout )
+    EVT_MENU ( MENU_ImportXML , MainFrame::OnImportXML )
+    EVT_MENU ( MENU_ExportXML , MainFrame::OnExportXML )
 
     EVT_LIST_ITEM_SELECTED ( LIST_Strings , MainFrame::OnStringSelect )
 
@@ -143,9 +145,14 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     // File Menu
     wxMenu * FileMenu = new wxMenu();
     FileMenu->Append(wxID_OPEN);
+    FileMenu->Append(MENU_ImportXML, translate("Import from XML..."));
+    FileMenu->AppendSeparator();
     FileMenu->Append(wxID_SAVE);
     FileMenu->Append(wxID_SAVEAS);
+    FileMenu->Append(MENU_ExportXML, translate("Export as XML..."));
+    FileMenu->AppendSeparator();
     FileMenu->Append(MENU_MachineTranslate, translate("&Perform Machine Translation..."));
+    FileMenu->AppendSeparator();
     FileMenu->Append(wxID_EXIT);
     MenuBar->Append(FileMenu, translate("&File"));
     //Help Menu
@@ -392,6 +399,40 @@ void MainFrame::OnAbout(wxCommandEvent& event) {
     wxAboutBox(aboutInfo);
 }
 
+void MainFrame::OnImportXML(wxCommandEvent& event) {
+    wxFileDialog fd(this, translate("Open XML file"), "", "", "XML files (*.xml)|*.xml", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+
+    if (fd.ShowModal() != wxID_OK)
+        return;
+
+    ImportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
+
+    sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
+    size_t listSize = stringList->internalData.size();
+    stringList->SetItemCount(listSize);
+    stringList->RefreshItems(0, listSize - 1);
+    //Reset everything.
+    stringList->filter.clear();
+    stringList->currentSelectionIndex = -1;
+    searchBox->Clear();
+    originalTextBox->Clear();
+    newTextBox->Clear();
+    stringsEdited = false;
+    filePath.clear();
+    SetStatusText(wxString::Format(wxT("%i strings"), listSize));
+    SetTitle("StrEdit : " + fd.GetPath());
+}
+
+void MainFrame::OnExportXML(wxCommandEvent& event) {
+     wxFileDialog fd(this, translate("Save XML file"), "", "", "XML files (*.xml)|*.xml", wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
+
+    if (fd.ShowModal() != wxID_OK)
+        return;
+
+    ExportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
+
+    stringsEdited = false;
+}
 
 void MainFrame::OnStringSelect(wxListEvent& event) {
 

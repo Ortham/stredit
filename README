@@ -36,6 +36,10 @@ Requirements:
   * libstrings
     - <http://github.com/WrinklyNinja/libstrings>
     - Download the latest source code.
+  * TinyXML-2
+    - <http://www.grinninglizard.com/tinyxml2/index.html>
+    - Download the latest source code.
+    - Tested with commit a6412ac2d5.
   * A native build system of your choice.
     - Tested with GNU Make on Ubuntu Linux 12.10.
 
@@ -50,6 +54,11 @@ Preparing wxWidgets:
   2. Place the contents of the wxWidgets archive you downloaded (should be
      'build', 'include', etc.) into the 'wxWidgets' folder.
   3. Can't remember this bit...
+
+Preparing TinyXML-2:
+  1. Create a 'tinyxml2' folder beside your StrEdit folder.
+  2. Place the contents of the TinyXML-2 archive you downloaded (should be
+     'tinyxml2.h', etc.) into the 'tinyxml2' folder.
 
 Boost will be prepared as part of preparing libstrings.
 

@@ -51,6 +51,10 @@ namespace stredit {
     void GetStrings(const std::string path, const int fallbackEnc, std::vector<str_data>& stringList);
     void SetStrings(const std::string path, const std::vector<str_data>& stringList);
 
+    //Import/Export strings as XML data.
+    void ImportAsXML(const std::string path,       std::vector<str_data>& stringList);
+    void ExportAsXML(const std::string path, const std::vector<str_data>& stringList);
+
     //Matches the strings in the maps by their IDs. Any IDs which are not present in both maps
     //are not included in the output. The passed vector has its contents appended to, not replaced.
     void BuildStringPairs(const boost::unordered_map<uint32_t, std::string>& originalStrMap,
