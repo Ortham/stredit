@@ -39,6 +39,7 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
     EVT_MENU ( wxID_OPEN , MainFrame::OnOpenFile )
     EVT_MENU ( wxID_SAVE , MainFrame::OnSaveFile )
     EVT_MENU ( wxID_SAVEAS , MainFrame::OnSaveFile )
+    EVT_MENU ( MENU_MachineTranslate , MainFrame::OnMachineTranslate )
     EVT_MENU ( wxID_EXIT , MainFrame::OnQuit )
     EVT_MENU ( wxID_HELP , MainFrame::OnViewReadme )
     EVT_MENU ( wxID_ABOUT , MainFrame::OnAbout )
@@ -53,7 +54,12 @@ BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE ( VirtualList, wxListCtrl )
-    EVT_CLOSE (VirtualList::OnClose )
+    EVT_CLOSE ( VirtualList::OnClose )
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE ( VocabDialog, wxDialog )
+    EVT_BUTTON ( wxID_ADD , VocabDialog::OnAddPair )
+    EVT_BUTTON ( wxID_REMOVE , VocabDialog::OnRemovePair )
 END_EVENT_TABLE()
 
 IMPLEMENT_APP(StrEditApp)
@@ -139,6 +145,7 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     FileMenu->Append(wxID_OPEN);
     FileMenu->Append(wxID_SAVE);
     FileMenu->Append(wxID_SAVEAS);
+    FileMenu->Append(MENU_MachineTranslate, translate("&Perform Machine Translation..."));
     FileMenu->Append(wxID_EXIT);
     MenuBar->Append(FileMenu, translate("&File"));
     //Help Menu
@@ -162,8 +169,8 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     stringList->InsertColumn(2, translate("Original String"));
     stringList->InsertColumn(3, translate("New String"));
 
-    originalTextBox = new wxTextCtrl(bottomPanel, TEXT_Original, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
-    newTextBox = new wxTextCtrl(bottomPanel, TEXT_New, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+    originalTextBox = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+    newTextBox = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 
     //Set up the sizers.
     wxBoxSizer * bigBox = new wxBoxSizer(wxVERTICAL);
@@ -262,6 +269,38 @@ void MainFrame::OnSaveFile(wxCommandEvent& event) {
         filePath.clear();
 
     SaveFile();
+}
+
+void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
+    VocabDialog * vd = new VocabDialog(this, wxID_ANY, "Select vocabulary files for machine translation...");
+
+    if (vd->ShowModal() != wxID_OK) {
+        vd->Destroy();
+        return;
+    }
+
+    std::vector<stredit::vocab_pair> pairs = vd->GetVocabPairs();
+    vd->Destroy();
+
+    //Now build up vocab string pair map.
+    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Opening file..."), 100, this, wxPD_APP_MODAL);
+    progDia.SetIcon(wxICON(MAINICON));
+    progDia.Pulse();
+    boost::unordered_map<std::string, std::string> stringMap;
+    for (int i=0, max=pairs.size(); i < max; ++i) {
+        boost::unordered_map<uint32_t, std::string> sourceMap;
+        boost::unordered_map<uint32_t, std::string> transMap;
+        GetStrings(pairs[i].source, pairs[i].sourceFallbackEnc, sourceMap);
+        GetStrings(pairs[i].trans, pairs[i].transFallbackEnc, transMap);
+        BuildStringPairs(sourceMap, transMap, stringMap);
+        progDia.Pulse();
+    }
+
+    //Now fuzzy match to string list.
+    FuzzyMatchStrings(stringMap, stringList->internalData);
+    progDia.Pulse();
+    sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
+    stringList->RefreshItems(0, stringList->internalData.size() - 1);
 }
 
 void MainFrame::SaveFile() {
@@ -481,4 +520,89 @@ int OpenDialog::GetTransFallbackEnc() const {
         return ret;
     else
         return 1251 + ret;
+}
+
+VocabDialog::VocabDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER) {
+    //Set up stuff in the frame.
+    SetIcon(wxICON(MAINICON));
+
+    wxSizer * buttons = CreateSeparatedButtonSizer(wxOK|wxCANCEL);
+
+    wxBoxSizer * bigBox = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer * buttonBox = new wxBoxSizer(wxHORIZONTAL);
+
+    addButton = new wxButton(this, wxID_ADD);
+    removeButton = new wxButton(this, wxID_REMOVE);
+
+    vocabPairList = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT);
+
+    vocabPairList->AppendColumn(translate("Source"));
+    vocabPairList->AppendColumn(translate("Translation"));
+    vocabPairList->AppendColumn(translate("Source Fallback Encoding"), wxLIST_FORMAT_LEFT, 0);
+    vocabPairList->AppendColumn(translate("Translation Fallback Encoding"), wxLIST_FORMAT_LEFT, 0);
+
+    buttonBox->Add(addButton, 0, wxALL, 5);
+    buttonBox->Add(removeButton, 0, wxALL, 5);
+
+    bigBox->Add(vocabPairList, 1, wxEXPAND|wxALL, 5);
+    bigBox->Add(buttonBox, 0, wxEXPAND|wxALL, 5);
+    bigBox->Add(buttons, 0, wxEXPAND|wxALL, 5);
+
+    //Now set the layout and sizes.
+    SetSizerAndFit(bigBox);
+}
+
+void VocabDialog::OnAddPair(wxCommandEvent& event) {
+    OpenDialog * od = new OpenDialog(this, wxID_ANY, translate("Open File(s)..."));
+
+    if (od->ShowModal() != wxID_OK) {
+        od->Destroy();
+        return;
+    }
+
+    wxString sourcePath = od->GetSourcePath();
+    wxString transPath = od->GetTransPath();
+    int sourceFallbackEnc = od->GetSourceFallbackEnc();
+    int transFallbackEnc = od->GetTransFallbackEnc();
+    od->Destroy();
+
+    if (sourcePath.empty() || transPath.empty()) {
+        wxMessageBox(
+            FromUTF8("Invalid file combination selected."),
+            translate("StrEdit: Error"),
+            wxOK | wxICON_ERROR,
+            this);
+        return;
+    }
+
+    int nextIndex = vocabPairList->GetItemCount();
+    vocabPairList->InsertItem(nextIndex, sourcePath);
+    vocabPairList->SetItem(nextIndex, 1, transPath);
+    vocabPairList->SetItem(nextIndex, 2, wxString::Format(wxT("%i"), sourceFallbackEnc));
+    vocabPairList->SetItem(nextIndex, 3, wxString::Format(wxT("%i"), transFallbackEnc));
+}
+
+void VocabDialog::OnRemovePair(wxCommandEvent& event) {
+    //First get the selected row.
+    long selectedItem = -1;
+    do {
+        selectedItem = vocabPairList->GetNextItem(selectedItem, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+        if (selectedItem != -1) {
+            vocabPairList->DeleteItem(selectedItem);
+        }
+    } while (selectedItem != -1);
+}
+
+vector<stredit::vocab_pair> VocabDialog::GetVocabPairs() const {
+    vector<vocab_pair> pairs;
+    int max = vocabPairList->GetItemCount();
+    for (int i=0; i < max; ++i) {
+        vocab_pair pair;
+        pair.source = vocabPairList->GetItemText(i, 0);
+        pair.trans = vocabPairList->GetItemText(i, 1);
+        pair.sourceFallbackEnc = wxAtoi(vocabPairList->GetItemText(i, 2));
+        pair.transFallbackEnc = wxAtoi(vocabPairList->GetItemText(i, 3));
+        pairs.push_back(pair);
+    }
+    return pairs;
 }

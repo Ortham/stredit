@@ -192,7 +192,7 @@ namespace stredit {
                     }
                 }
                 //bestMatch now points to the best matching element of stringMap.
-                it->newString = bestMatch->first;
+                it->newString = bestMatch->second;
                 it->fuzzy = (leastLDist != 0);
             }
         }

@@ -50,8 +50,7 @@ enum {
     //Main window.
     SEARCH_Strings = wxID_HIGHEST + 1, // declares an id which will be used to call our button
     LIST_Strings,
-    TEXT_Original,
-    TEXT_New
+    MENU_MachineTranslate
 };
 
 class StrEditApp : public wxApp {
@@ -82,6 +81,7 @@ public:
     MainFrame(const wxChar *title);
     void OnOpenFile(wxCommandEvent& event);
     void OnSaveFile(wxCommandEvent& event);
+    void OnMachineTranslate(wxCommandEvent& event);
     void OnQuit(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
     void OnViewReadme(wxCommandEvent& event);
@@ -120,6 +120,31 @@ private:
     wxFilePickerCtrl * transPicker;
     wxChoice * srcFallbackEncChoice;
     wxChoice * transFallbackEncChoice;
+};
+
+namespace stredit {
+    struct vocab_pair {
+        std::string source;
+        std::string trans;
+        int sourceFallbackEnc;
+        int transFallbackEnc;
+    };
+}
+
+class VocabDialog : public wxDialog {
+public:
+    VocabDialog(wxWindow * parent, wxWindowID id, const wxString& title);
+
+    void OnAddPair(wxCommandEvent& event);
+    void OnRemovePair(wxCommandEvent& event);
+
+    std::vector<stredit::vocab_pair> GetVocabPairs() const;
+private:
+    wxButton * addButton;
+    wxButton * removeButton;
+    wxListCtrl * vocabPairList;
+
+    DECLARE_EVENT_TABLE()
 };
 
 #endif
