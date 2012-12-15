@@ -405,8 +405,20 @@ void MainFrame::OnImportXML(wxCommandEvent& event) {
     if (fd.ShowModal() != wxID_OK)
         return;
 
-    ImportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
-
+    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Importing strings..."), 100, this, wxPD_APP_MODAL);
+    progDia.SetIcon(wxICON(MAINICON));
+    progDia.Pulse();
+    try {
+        ImportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
+    } catch (runtime_error& e) {
+        wxMessageBox(
+            FromUTF8(e.what()),
+            translate("StrEdit: Error"),
+            wxOK | wxICON_ERROR,
+            this);
+        return;
+    }
+    progDia.Pulse();
     sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
     size_t listSize = stringList->internalData.size();
     stringList->SetItemCount(listSize);
@@ -429,6 +441,9 @@ void MainFrame::OnExportXML(wxCommandEvent& event) {
     if (fd.ShowModal() != wxID_OK)
         return;
 
+    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Exporting strings..."), 100, this, wxPD_APP_MODAL);
+    progDia.SetIcon(wxICON(MAINICON));
+    progDia.Pulse();
     ExportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
 
     stringsEdited = false;

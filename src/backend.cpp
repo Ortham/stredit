@@ -28,7 +28,8 @@
 #include <sstream>
 #include <cstdio>
 #include <boost/locale.hpp>
-#include <tinyxml2.h>
+//#include <tinyxml2.h>
+#include <pugixml.hpp>
 
 using namespace std;
 using boost::locale::translate;
@@ -141,65 +142,55 @@ namespace stredit {
 
     //Import/Export strings as XML data.
     void ImportAsXML(const std::string path,       std::vector<str_data>& stringList) {
-        tinyxml2::XMLDocument doc;
-        doc.LoadFile(path.c_str());
 
-        /* XML structure:
+        using namespace pugi;
 
-        <strings>
-            <string>
-                <id></id>
-                <data></data>
-            </string>
-        </strings>
+        xml_document doc;
 
-        <strings> may contain multiple <string> elements. */
+        xml_parse_result result = doc.load_file(path.c_str(), (parse_default | parse_ws_pcdata_single) & ~parse_eol, encoding_utf8 );
 
-        //Need to loop through <string> elements.
+        if (!result)
+            throw runtime_error(translate("Could not read XML file."));
 
-        tinyxml2::XMLElement * stringElement = doc.FirstChildElement("strings")->FirstChildElement("string");
+        xml_node strings = doc.child("strings");
 
-        while (stringElement != NULL) {
+        stringList.clear();
+        for (xml_node string = strings.child("string"); string; string = string.next_sibling("string")) {
             str_data data;
-            data.id = atoi(stringElement->FirstChildElement("id")->FirstChild()->ToText()->Value());
-            data.oldString = stringElement->FirstChildElement("data")->FirstChild()->ToText()->Value();
+            data.id = string.attribute("id").as_int();
+            data.oldString = string.text().get();
             stringList.push_back(data);
-
-            stringElement = stringElement->NextSiblingElement("string");
         }
     }
 
     void ExportAsXML(const std::string path, const std::vector<str_data>& stringList) {
 
-        FILE * fp = fopen(path.c_str(), "w");
+        using namespace pugi;
 
-        tinyxml2::XMLPrinter printer(fp);
+        xml_document doc;
 
-        printer.PushHeader(true, true);
-        printer.OpenElement("strings");
+        xml_node topNode = doc.append_child();
+
+        topNode.set_name("strings");
 
         for (int i=0, max=stringList.size(); i < max; ++i) {
+            xml_node strNode = topNode.append_child();
 
-            string id = static_cast<ostringstream*>( &(ostringstream() << stringList[i].id) )->str();
+            strNode.set_name("string");
+
+            xml_attribute id = strNode.append_attribute("id");
+            id.set_value(stringList[i].id);
+
             string str;
             if (stringList[i].newString.empty())
                 str = stringList[i].oldString;
             else
                 str = stringList[i].newString;
-
-            printer.OpenElement("string");
-            printer.OpenElement("id");
-            printer.PushText(id.c_str());
-            printer.CloseElement();
-            printer.OpenElement("data");
-            printer.PushText(str.c_str());
-            printer.CloseElement();
-            printer.CloseElement();
+            strNode.text().set(str.c_str());
         }
 
-        printer.CloseElement();
-
-        fclose(fp);
+        if (!doc.save_file(path.c_str()))
+            throw runtime_error(translate("Could not write XML file."));
     }
 
     //Matches the strings in the maps by their IDs. Any IDs which are not present in both maps
@@ -307,7 +298,9 @@ namespace stredit {
             return true;
         else if (!first.fuzzy && second.fuzzy)
             return false;
-        else
+        else if (first.oldString != second.oldString)
             return first.oldString < second.oldString;
+        else
+            return first.id < second.id;
     }
 }

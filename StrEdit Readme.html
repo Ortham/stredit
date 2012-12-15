@@ -20,6 +20,8 @@
     a[href^="http"]:after {padding-left:2px; content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAVklEQVR4Xn3PgQkAMQhDUXfqTu7kTtkpd5RA8AInfArtQ2iRXFWT2QedAfttj2FsPIOE1eCOlEuoWWjgzYaB/IkeGOrxXhqB+uA9Bfcm0lAZuh+YIeAD+cAqSz4kCMUAAAAASUVORK5CYII=);}
     img{display:block;margin:1em;}
     kbd {border:3px outset grey; padding:0 2px; background:lightgrey;}
+    code {display:inline-block; padding:2px 5px; background:#eee;}
+    code.box {line-height:20px; white-space:pre; margin:1em 0; display:table; padding:5px 10px;}
 </style>
 <!--
     StrEdit
@@ -99,16 +101,31 @@
 <p>Once you have selected all the file pairs you wish to use as a vocabulary, click the <q>OK</q> button. StrEdit will then scan through all your untranslated strings, matching each one up to the closest translation available in the vocabulary. If an exact translation cannot be found, then the next-closest match will be used, and the match will be marked as <q>fuzzy</q> in the main window's string list. Note that this step can take a long time, depending on the number of strings to be scanned through and the number of string pairs in the vocabulary.
 <p>Machine translations may be used to quickly perform a rough translation of a string table, or alternatively they can be used to update a translation to match a newer version of its source file. This is done by opening the newer source file in StrEdit's main window, then selecting the old source file and the translation as a vocabulary file pair, and performing a machine translation with them.
 
+<h3>XML Export/Import</h3>
+<p>You can also import and export string tables as XML files for more sophisticated editing outside of StrEdit. This can be done by selecting <q>File->Import from XML...</q> and <q>File->Export to XML...</q> respectively. The XML file format used is as follows:</p>
+
+<code class="box">&lt;?xml version="1.0"?&gt;
+&lt;strings&gt;
+    &lt;string id="1"&gt;Example text. There can be many &amp;lt;string&amp;gt; entries.&lt;/string&gt;
+&lt;/strings&gt;
+</code>
+<p>Note that StrEdit expects any imported XML files to be valid (to a certain extent, as the library used does not fully validate files). For instance, this means that ampersands and less-than characters should be escaped when they are used in strings. This is done automatically when an XML file is exported from StrEdit.
+<p>When StrEdit exports strings to an XML file, it uses the new string, unless that is empty, in which case the original string is used. When an XML file is imported, all the strings it contains are used as original strings.
+
 
 <h2 id="credits">Credits</h2>
 <p>Thanks go to shadeMe and zilav for answering some questions I had during development.
 <p>StrEdit's interface is inspired by <a href="http://poedit.net/">Poedit's</a> interface.
-<p>StrEdit is written in C++ and makes use of the <a href="http://www.boost.org/">Boost</a>, <a href="http://www.wxwidgets.org/">wxWidgets</a>, <a href="http://github.com/WrinklyNinja/libstrings">libstrings</a> and <a href="http://www.grinninglizard.com/tinyxml2/index.html">TinyXML-2</a> libraries. Without them, it would not exist.
+<p>StrEdit is written in C++ and makes use of the <a href="http://www.boost.org/">Boost</a>, <a href="http://www.wxwidgets.org/">wxWidgets</a>, <a href="http://github.com/WrinklyNinja/libstrings">libstrings</a> and <a href="http://pugixml.org/">pugixml</a> libraries. Without them, it would not exist.
 
 <h2 id="license">License</h2>
 <p>StrEdit is copyright &copy; 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSES</q> file.
 
 <h2 id="history">Version History</h2>
+<h3>v0.3.1 - <i>December 2012</i></h3>
+<ul>
+    <li>Added the ability to export strings to an XML file, and to import them again.
+</ul>
 <h3>v0.3 - <i>14 December 2012</i></h3>
 <ul>
     <li>Added a quick copy/paste keboard shortcut, Alt+C, that copies the original string of the selected row into the new string text box then moves keyboard focus to it.
