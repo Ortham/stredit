@@ -43,7 +43,7 @@ namespace stredit {
 
     //Some global constants.
     const std::string readme_path = "StrEdit Readme.html";
-    const std::string version_string = "0.3.0";
+    const std::string version_string = "0.3.1";
 
     //String file reading/writing. These could be replaced by a more optimised
     //per-string editing system once everything is working.
@@ -71,7 +71,8 @@ namespace stredit {
     //their corresponding oldStrings and the keys of stringMap, then using the corresponding
     //mapped string. It also updates the fuzzy data member as necessary.
     void FuzzyMatchStrings(const boost::unordered_map<std::string, std::string>& stringMap,
-                                 std::vector<str_data>& stringList);
+                                 std::vector<str_data>& stringList,
+                                 void * progDiaPtr);
 
     //Some helper functions.
     uint8_t * ToUint8_tString(const std::string str);

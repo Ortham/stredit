@@ -22,13 +22,11 @@
 */
 
 #include "backend.h"
+#include "progress.h"
 
 #include <libstrings.h>
 #include <stdexcept>
-#include <sstream>
-#include <cstdio>
 #include <boost/locale.hpp>
-//#include <tinyxml2.h>
 #include <pugixml.hpp>
 
 using namespace std;
@@ -229,29 +227,35 @@ namespace stredit {
     //their corresponding oldStrings and the keys of stringMap, then using the corresponding
     //mapped string.
     void FuzzyMatchStrings(const boost::unordered_map<std::string, std::string>& stringMap,
-                                 std::vector<str_data>& stringList) {
+                                 std::vector<str_data>& stringList,
+                                 void * progDiaPtr) {
+        const int num = stringList.size();
+        int i = 1;
         boost::unordered_map<std::string, std::string>::const_iterator bestMatch;
         for (std::vector<str_data>::iterator it=stringList.begin(), endIt=stringList.end(); it != endIt; ++it) {
             if (it->newString.empty()) {
-                int leastLDist = -1;
-                bestMatch = stringMap.end();
-                for (boost::unordered_map<std::string, std::string>::const_iterator itr=stringMap.begin(), endItr=stringMap.end(); itr != endItr; ++itr) {
-                    if (it->oldString == itr->first) {
-                        bestMatch = itr;
-                        leastLDist = 0;
-                        break;
-                    } else {
-                        int lDist = Levenshtein(it->oldString, itr->first);
-                        if (leastLDist == -1 || leastLDist > lDist) {
+                bestMatch = stringMap.find(it->oldString);
+                int leastDist = 0;
+                if (bestMatch == stringMap.end()) {
+                    leastDist = -1;
+                    for (boost::unordered_map<std::string, std::string>::const_iterator itr=stringMap.begin(), endItr=stringMap.end(); itr != endItr; ++itr) {
+                        int dist = Levenshtein(it->oldString, itr->first);
+                        if (leastDist == -1 || leastDist > dist) {
                             bestMatch = itr;
-                            leastLDist = lDist;
+                            leastDist = dist;
+                            if (dist == 1)  //Closest non-exact match possible.
+                                break;
                         }
                     }
                 }
-                //bestMatch now points to the best matching element of stringMap.
-                it->newString = bestMatch->second;
-                it->fuzzy = (leastLDist != 0);
+                if (bestMatch != stringMap.end()) {
+                    //bestMatch now points to the best matching element of stringMap.
+                    it->newString = bestMatch->second;
+                    it->fuzzy = (leastDist != 0);
+                }
             }
+            update_progress(progDiaPtr, "", ((float)i / num) * 100);
+            ++i;
         }
     }
 
@@ -272,9 +276,13 @@ namespace stredit {
     //Used under the CC-BY-SA 3.0 license: <http://creativecommons.org/licenses/by-sa/3.0/>
     int Levenshtein(const std::string s1, const std::string s2) {
         const size_t len1 = s1.size(), len2 = s2.size();
-        vector<unsigned int> col(len2+1), prevCol(len2+1);
 
-        for (unsigned int i = 0; i < prevCol.size(); i++) {
+        typedef unsigned int t;
+
+        unsigned int * col = new t[ len2 + 1 ];
+        unsigned int * prevCol = new t[ len2 + 1];
+
+        for (unsigned int i = 0; i < len2 + 1; i++) {
             prevCol[i] = i;
         }
         for (unsigned int i = 0; i < len1; i++) {
@@ -282,8 +290,13 @@ namespace stredit {
             for (unsigned int j = 0; j < len2; j++) {
                 col[j+1] = min( min( 1 + col[j], 1 + prevCol[1 + j]), prevCol[j] + (s1[i]==s2[j] ? 0 : 1) );
             }
-            col.swap(prevCol);
+            unsigned int * ptr = col;
+            col = prevCol;
+            prevCol = ptr;
         }
+
+        delete [] col;
+        delete [] prevCol;
         return prevCol[len2];
     }
 

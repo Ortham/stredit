@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <title>StrEdit Readme</title>
-<link href='http://fonts.googleapis.com/css?family=Cinzel|Abel|Coming+Soon' rel='stylesheet' type='text/css'>
 <style>
     body {font-family:Helvetica,sans-serif;font-size:10pt;}
     h1 + p {text-align:center;}
     li {margin-bottom:10px;}
+    li ul, li ol {margin-top:0.4em;}
+    ol li ol {list-style:lower-alpha;}
+    ol li ol li ol {list-style:lower-roman;}
+    ol ol li {margin-bottom:0.2em;}
     q {font-style:italic;}
     td, th {border:1px solid #ddd; padding: 5px; vertical-align:top;}
     table {border-collapse:collapse; margin:1em;background:#FafaFf;}
@@ -55,6 +58,12 @@
     <li><a href="#intro">Introduction</a>
     <li><a href="#install">Installation &amp; Uninstallation</a>
     <li><a href="#usage">Usage</a>
+    <ol>
+        <li><a href="#usage-opening">Opening String Tables</a>
+        <li><a href="#usage-editing">General Editing</a>
+        <li><a href="#usage-machine">Machine Translation</a>
+        <li><a href="#usage-xml">XML Import/Export</a>
+    </ol>
     <li><a href="#credits">Credits</a>
     <li><a href="#license">License</a>
     <li><a href="#history">Version History</a>
@@ -69,6 +78,7 @@
 <p>To uninstall, delete the <q>StrEdit</q> folder you previously extracted.
 
 <h2 id="usage">Usage</h2>
+<h3 id="usage-opening">Opening String Tables</h3>
 <p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. On launch, the <q>Open File(s)...</q> dialog, shown below, is displayed.
 <img alt="open files" src="images/open-files.png"/>
 <p>The translation file is optional, and should be used if updating an existing translation. The source file must always be specified, and if a translation file is also specified, it must be exactly the same file as was used to create the translation from.
@@ -78,6 +88,7 @@
     <li><b>Windows-1251.</b> This should be used for string tables that are for Cyrillic alphabet languages, such as Russian.
 </ul>
 
+<h3 id="usage-editing">General Editing</h3>
 <p>Once StrEdit has opened the file(s) selected, it will display its main window:
 <img alt="main window" src="images/main.png"/>
 <p>The main window consists of four primary elements:
@@ -94,14 +105,14 @@
 <p>Selecting a row then pressing <kbd>Alt+C</kbd> will paste the original string into the new string box, then move keyboard focus to it.
 <p>Once you have finished working, select <q>File->Save</q> or <q>File->Save As...</q> to save your work. If you attempt to quit with unsaved work, StrEdit will ask you if you want to save it before quitting. For simplicity and greatest compatibility, StrEdit saves all string tables with their strings encoded in UTF-8.
 
-<h3>Machine Translation</h3>
+<h3 id="usage-machine">Machine Translation</h3>
 <p>StrEdit can be used to perform a machine translation of any untranslated strings in the current file by selecting <q>File->Perform Machine Translation...</q>. This will display the following window:
 <img alt="machine translation window" src="images/vocab-select.png"/>
 <p>The machine translation uses a vocabulary of previously-translated string pairs to find the closest translations for untranslated strings, and it is in this window that you select the pairs of string tables to be used to generate this vocabulary. Clicking on the <q>Add</q> button will display the <q>Open File(s)</q> dialog, in which you may pick a source file and a corresponding translation. Clicking the <q>Remove</q> button will remove the currently-selected row from the file list.
 <p>Once you have selected all the file pairs you wish to use as a vocabulary, click the <q>OK</q> button. StrEdit will then scan through all your untranslated strings, matching each one up to the closest translation available in the vocabulary. If an exact translation cannot be found, then the next-closest match will be used, and the match will be marked as <q>fuzzy</q> in the main window's string list. Note that this step can take a long time, depending on the number of strings to be scanned through and the number of string pairs in the vocabulary.
 <p>Machine translations may be used to quickly perform a rough translation of a string table, or alternatively they can be used to update a translation to match a newer version of its source file. This is done by opening the newer source file in StrEdit's main window, then selecting the old source file and the translation as a vocabulary file pair, and performing a machine translation with them.
 
-<h3>XML Export/Import</h3>
+<h3 id="usage-xml">XML Import/Export</h3>
 <p>You can also import and export string tables as XML files for more sophisticated editing outside of StrEdit. This can be done by selecting <q>File->Import from XML...</q> and <q>File->Export to XML...</q> respectively. The XML file format used is as follows:</p>
 
 <code class="box">&lt;?xml version="1.0"?&gt;
@@ -119,12 +130,14 @@
 <p>StrEdit is written in C++ and makes use of the <a href="http://www.boost.org/">Boost</a>, <a href="http://www.wxwidgets.org/">wxWidgets</a>, <a href="http://github.com/WrinklyNinja/libstrings">libstrings</a> and <a href="http://pugixml.org/">pugixml</a> libraries. Without them, it would not exist.
 
 <h2 id="license">License</h2>
-<p>StrEdit is copyright &copy; 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSES</q> file.
+<p>StrEdit is copyright &copy; 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSE</q> file.
 
 <h2 id="history">Version History</h2>
 <h3>v0.3.1 - <i>December 2012</i></h3>
 <ul>
     <li>Added the ability to export strings to an XML file, and to import them again.
+    <li>Implemented real progress indication for fuzzy string matching.
+    <li>Increased performance of machine translation by 10x.
 </ul>
 <h3>v0.3 - <i>14 December 2012</i></h3>
 <ul>

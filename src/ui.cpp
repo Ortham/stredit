@@ -290,7 +290,7 @@ void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
     vd->Destroy();
 
     //Now build up vocab string pair map.
-    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Opening file..."), 100, this, wxPD_APP_MODAL);
+    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Building Vocabulary..."), 100, this, wxPD_APP_MODAL|wxPD_ELAPSED_TIME);
     progDia.SetIcon(wxICON(MAINICON));
     progDia.Pulse();
     boost::unordered_map<std::string, std::string> stringMap;
@@ -304,8 +304,9 @@ void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
     }
 
     //Now fuzzy match to string list.
-    FuzzyMatchStrings(stringMap, stringList->internalData);
-    progDia.Pulse();
+    progDia.Update(0, "Translating strings...");
+    FuzzyMatchStrings(stringMap, stringList->internalData, &progDia);
+
     sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
     stringList->RefreshItems(0, stringList->internalData.size() - 1);
 }

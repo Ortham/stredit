@@ -1,7 +1,7 @@
 #include "wx/msw/wx.rc"
 1 VERSIONINFO
- FILEVERSION 0,3,0,0
- PRODUCTVERSION 0,3,0,0
+ FILEVERSION 0,3,1,0
+ PRODUCTVERSION 0,3,1,0
  FILEOS VOS__WINDOWS32
  FILETYPE VFT_APP
 BEGIN
@@ -9,9 +9,9 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileVersion", "0.3.0"
+            VALUE "FileVersion", "0.3.1"
             VALUE "LegalCopyright", "Copyright (C) 2012 WrinklyNinja"
-            VALUE "ProductVersion", "0.3.0"
+            VALUE "ProductVersion", "0.3.1"
         END
     END
     BLOCK "VarFileInfo"

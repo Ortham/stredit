@@ -11,7 +11,7 @@
 cmake_minimum_required (VERSION 2.8.9)
 project (StrEdit)
 
-set (STREDIT_SRC "${CMAKE_SOURCE_DIR}/src/backend.cpp" "${CMAKE_SOURCE_DIR}/src/ui.cpp" "${STREDIT_LIBS_DIR}/pugixml/src/pugixml.cpp")
+set (STREDIT_SRC "${CMAKE_SOURCE_DIR}/src/progress.cpp" "${CMAKE_SOURCE_DIR}/src/backend.cpp" "${CMAKE_SOURCE_DIR}/src/ui.cpp" "${STREDIT_LIBS_DIR}/pugixml/src/pugixml.cpp")
 
 # Include source and library directories.
 include_directories ("${STREDIT_LIBS_DIR}/boost" "${STREDIT_LIBS_DIR}/pugixml/src" "${STREDIT_LIBS_DIR}/libstrings/src" "${CMAKE_SOURCE_DIR}/src")
