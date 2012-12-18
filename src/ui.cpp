@@ -30,7 +30,6 @@
 #include <boost/algorithm/string.hpp>
 #include <wx/aboutdlg.h>
 #include <wx/msgdlg.h>
-#include <wx/progdlg.h>
 #include <wx/splitter.h>
 
 BEGIN_EVENT_TABLE ( MainFrame, wxFrame )
@@ -71,19 +70,15 @@ using namespace stredit;
 
 namespace stredit {
     //UI helper functions.
-    wxString translate(char * cstr) {
-        return wxString(boost::locale::translate(cstr).str().c_str(), wxConvUTF8);
-    }
-
-    wxString translate(string str) {
+    wxString translate(const string str) {
         return wxString(boost::locale::translate(str).str().c_str(), wxConvUTF8);
     }
 
-    wxString FromUTF8(string str) {
+    wxString FromUTF8(const string str) {
         return wxString(str.c_str(), wxConvUTF8);
     }
 
-    wxString FromUTF8(boost::format f) {
+    wxString FromUTF8(const boost::format f) {
         return FromUTF8(f.str());
     }
 }
@@ -95,15 +90,16 @@ bool StrEditApp::OnInit() {
     frame->Show(true);
     SetTopWindow(frame);
 
-    //Display OpenDialog.
-    wxCommandEvent event;
-    frame->OnOpenFile(event);
-
     return true;
 }
 
 VirtualList::VirtualList(wxWindow * parent, wxWindowID id) : wxListCtrl(parent, id, wxDefaultPosition, wxDefaultSize, wxLC_REPORT|wxLC_VIRTUAL), currentSelectionIndex(-1) {
     attr = new wxListItemAttr();
+
+    InsertColumn(0, translate("Fuzzy"));
+    InsertColumn(1, translate("ID"));
+    InsertColumn(2, translate("Original String"));
+    InsertColumn(3, translate("New String"));
 }
 
 wxString VirtualList::OnGetItemText(long item, long column) const {
@@ -139,17 +135,150 @@ void VirtualList::OnClose(wxCloseEvent& event) {
     Destroy();
 }
 
+void VirtualList::SetItems(const wxString sourcePath, const int sourceEnc, const wxString transPath, const int transEnc) {
+    if (transPath.empty())
+        GetStrings(sourcePath.ToUTF8().data(), sourceEnc, internalData);
+    else {
+        boost::unordered_map<uint32_t, std::string> sourceMap;
+        boost::unordered_map<uint32_t, std::string> transMap;
+        GetStrings(sourcePath.ToUTF8().data(), sourceEnc, sourceMap);
+        GetStrings(transPath.ToUTF8().data(), transEnc, transMap);
+        BuildStringData(sourceMap, transMap, internalData);
+    }
+
+    sort(internalData.begin(), internalData.end(), compare_old_new);
+    size_t listSize = internalData.size();
+    SetItemCount(listSize);
+    RefreshItems(0, listSize - 1);
+    //Reset everything.
+    filter.clear();
+    currentSelectionIndex = -1;
+}
+
+void VirtualList::SetItems(const wxString xmlPath) {
+    ImportAsXML(xmlPath.ToUTF8().data(), internalData);
+
+    sort(internalData.begin(), internalData.end(), compare_old_new);
+    size_t listSize = internalData.size();
+    SetItemCount(listSize);
+    RefreshItems(0, listSize - 1);
+    //Reset everything.
+    filter.clear();
+    currentSelectionIndex = -1;
+}
+
+void VirtualList::FuzzyTranslate(const boost::unordered_map<std::string, std::string>& stringMap, wxProgressDialog * pd) {
+    FuzzyMatchStrings(stringMap, internalData, pd);
+
+    sort(internalData.begin(), internalData.end(), compare_old_new);
+    RefreshItems(0, internalData.size() - 1);
+}
+
+int VirtualList::GetTotalItemCount() const {
+    internalData.size();
+}
+
+int VirtualList::GetHiddenCount() const {
+    if (filter.empty())
+        return 0;
+    else
+        return internalData.size() - filter.size();
+}
+
+int VirtualList::GetFuzzyCount() const {
+    int count = 0;
+    for (std::vector<str_data>::const_iterator it=internalData.begin(), endIt=internalData.end(); it != endIt; ++it) {
+        if (it->fuzzy)
+            ++count;
+    }
+    return count;
+}
+
+int VirtualList::GetTranslatedCount() const {
+    int count = 0;
+    for (std::vector<str_data>::const_iterator it=internalData.begin(), endIt=internalData.end(); it != endIt; ++it) {
+        if (!it->newString.empty())
+            ++count;
+    }
+    return count;
+}
+
+const std::vector<stredit::str_data>& VirtualList::GetItems() const {
+    return internalData;
+}
+
+bool VirtualList::IsContentEdited() const {
+    for (std::vector<str_data>::const_iterator it=internalData.begin(), endIt=internalData.end(); it != endIt; ++it) {
+        if (it->edited)
+            return true;
+    }
+    return false;
+}
+
+void VirtualList::ResetEditedFlags() {
+    for (std::vector<str_data>::iterator it=internalData.begin(), endIt=internalData.end(); it != endIt; ++it) {
+        if (it->edited)
+            it->edited = false;
+    }
+}
+
+void VirtualList::ApplyFilter(const wxString str) {
+    filter.clear();
+    size_t itemCount = 0;
+    if (!str.empty()) {
+        string filterStr = str.ToUTF8().data();
+        for (size_t i=0, max=internalData.size(), length=filterStr.length(); i < max; ++i) {
+            if (boost::iequals(internalData[i].oldString.substr(0, length), filterStr))
+                filter.push_back(i);
+        }
+        itemCount = filter.size();
+    } else {
+        itemCount = internalData.size();
+    }
+
+    SetItemCount(itemCount);
+    RefreshItems(0, itemCount - 1);
+}
+
+bool VirtualList::IsFiltered() const {
+    return !filter.empty();
+}
+
+void VirtualList::UpdateSelectedItem(const wxString str) {
+    if (currentSelectionIndex != -1) {
+
+        string newStr = str.ToUTF8().data();
+
+        if (internalData[currentSelectionIndex].newString != newStr) {
+            internalData[currentSelectionIndex].newString = newStr;
+            internalData[currentSelectionIndex].edited = true;
+            RefreshItem(currentSelectionIndex);
+        }
+    }
+}
+
+void VirtualList::SetSelectedIndex(const int i) {
+    if (filter.empty())
+        currentSelectionIndex = i;
+    else
+        currentSelectionIndex = filter[i];
+}
+
+str_data VirtualList::GetSelectedItem() const {
+    return internalData[currentSelectionIndex];
+}
+
 MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxDefaultSize), stringsEdited(false) {
     //Set up menu bar first.
     wxMenuBar * MenuBar = new wxMenuBar();
     // File Menu
     wxMenu * FileMenu = new wxMenu();
     FileMenu->Append(wxID_OPEN);
-    FileMenu->Append(MENU_ImportXML, translate("Import from XML..."));
+    FileMenu->Append(MENU_ImportXML, translate("&Import from XML..."));
     FileMenu->AppendSeparator();
     FileMenu->Append(wxID_SAVE);
     FileMenu->Append(wxID_SAVEAS);
-    FileMenu->Append(MENU_ExportXML, translate("Export as XML..."));
+    FileMenu->Append(MENU_ExportXML, translate("&Export as XML..."));
     FileMenu->AppendSeparator();
     FileMenu->Append(MENU_MachineTranslate, translate("&Perform Machine Translation..."));
     FileMenu->AppendSeparator();
@@ -171,10 +300,6 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     searchBox = new wxSearchCtrl(topPanel, SEARCH_Strings, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 
     stringList = new VirtualList(topPanel, LIST_Strings);
-    stringList->InsertColumn(0, translate("Fuzzy"));
-    stringList->InsertColumn(1, translate("ID"));
-    stringList->InsertColumn(2, translate("Original String"));
-    stringList->InsertColumn(3, translate("New String"));
 
     originalTextBox = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
     newTextBox = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
@@ -194,7 +319,7 @@ MainFrame::MainFrame(const wxChar *title) : wxFrame(NULL, wxID_ANY, title, wxDef
     splitter->SplitHorizontally(topPanel, bottomPanel);
     SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
     SetIcon(wxICON(MAINICON));
-    CreateStatusBar();
+    CreateStatusBar(4);
 
     topPanel->SetSizerAndFit(topSizer);
     bottomPanel->SetSizerAndFit(bottomSizer);
@@ -205,20 +330,12 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
     //Display the OpenDialog, then get the strings from the picked files and
     //fill the string list with them.
 
-    OpenDialog * od = new OpenDialog(this, wxID_ANY, translate("Open File(s)..."));
+    OpenDialog od(this, wxID_ANY, translate("Open File(s)"));
 
-    if (od->ShowModal() != wxID_OK) {
-        od->Destroy();
+    if (od.ShowModal() != wxID_OK)
         return;
-    }
 
-    string sourcePath = od->GetSourcePath().ToUTF8().data();
-    string transPath = od->GetTransPath().ToUTF8().data();
-    int sourceFallbackEnc = od->GetSourceFallbackEnc();
-    int transFallbackEnc = od->GetTransFallbackEnc();
-    od->Destroy();
-
-    if (sourcePath.empty()) {
+    if (od.GetSourcePath().empty()) {
         wxMessageBox(
             FromUTF8("Invalid file combination selected."),
             translate("StrEdit: Error"),
@@ -227,21 +344,11 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
         return;
     }
 
-    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Opening file..."), 100, this, wxPD_APP_MODAL);
+    wxProgressDialog progDia(translate("StrEdit: Working"), translate("Opening file..."), 100, this, wxPD_APP_MODAL);
     progDia.SetIcon(wxICON(MAINICON));
     progDia.Pulse();
     try {
-        if (transPath.empty()) {
-            //Only one file.
-            GetStrings(sourcePath, sourceFallbackEnc, stringList->internalData);
-        } else {
-            //Two files.
-            boost::unordered_map<uint32_t, std::string> sourceMap;
-            boost::unordered_map<uint32_t, std::string> transMap;
-            GetStrings(sourcePath, sourceFallbackEnc, sourceMap);
-            GetStrings(transPath, transFallbackEnc, transMap);
-            BuildStringData(sourceMap, transMap, stringList->internalData);
-        }
+        stringList->SetItems(od.GetSourcePath(), od.GetSourceFallbackEnc(), od.GetTransPath(), od.GetTransFallbackEnc());
    } catch (runtime_error& e) {
         wxMessageBox(
             FromUTF8(e.what()),
@@ -251,24 +358,14 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
         return;
     }
     progDia.Pulse();
-    sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
-    progDia.Pulse();
-    size_t listSize = stringList->internalData.size();
-    stringList->SetItemCount(listSize);
-    stringList->RefreshItems(0, listSize - 1);
     //Reset everything.
-    stringList->filter.clear();
-    stringList->currentSelectionIndex = -1;
-    searchBox->Clear();
-    originalTextBox->Clear();
-    newTextBox->Clear();
-    stringsEdited = false;
-    if (!transPath.empty())
-        filePath = transPath;
+    Reset();
+    filePath = od.GetTransPath();
+    UpdateStatus();
+    if (filePath.empty())
+        SetTitle("StrEdit");
     else
-        filePath.clear();
-    SetStatusText(wxString::Format(wxT("%i strings"), listSize));
-    SetTitle("StrEdit : " + sourcePath);
+        SetTitle("StrEdit : " + filePath);
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {
@@ -279,20 +376,16 @@ void MainFrame::OnSaveFile(wxCommandEvent& event) {
 }
 
 void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
-    VocabDialog * vd = new VocabDialog(this, wxID_ANY, "Select vocabulary files for machine translation...");
+    VocabDialog vd(this, wxID_ANY, "Select vocabulary files for machine translation.");
 
-    if (vd->ShowModal() != wxID_OK) {
-        vd->Destroy();
+    if (vd.ShowModal() != wxID_OK)
         return;
-    }
-
-    std::vector<stredit::vocab_pair> pairs = vd->GetVocabPairs();
-    vd->Destroy();
 
     //Now build up vocab string pair map.
-    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Building Vocabulary..."), 100, this, wxPD_APP_MODAL|wxPD_ELAPSED_TIME);
+    wxProgressDialog progDia(translate("StrEdit: Working"), translate("Building Vocabulary..."), 100, this, wxPD_APP_MODAL|wxPD_ELAPSED_TIME);
     progDia.SetIcon(wxICON(MAINICON));
     progDia.Pulse();
+    std::vector<stredit::vocab_pair> pairs = vd.GetVocabPairs();
     boost::unordered_map<std::string, std::string> stringMap;
     for (int i=0, max=pairs.size(); i < max; ++i) {
         boost::unordered_map<uint32_t, std::string> sourceMap;
@@ -305,16 +398,14 @@ void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
 
     //Now fuzzy match to string list.
     progDia.Update(0, "Translating strings...");
-    FuzzyMatchStrings(stringMap, stringList->internalData, &progDia);
-
-    sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
-    stringList->RefreshItems(0, stringList->internalData.size() - 1);
+    stringList->FuzzyTranslate(stringMap, &progDia);
+    UpdateStatus();
 }
 
 void MainFrame::SaveFile() {
     if (filePath.empty()) {
         //Display file picker dialog.
-        wxFileDialog saveFileDialog(this, translate("Save As..."), wxEmptyString, wxEmptyString,
+        wxFileDialog saveFileDialog(this, translate("Save As"), wxEmptyString, wxEmptyString,
             "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS",
             wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
 
@@ -326,12 +417,12 @@ void MainFrame::SaveFile() {
         filePath = saveFileDialog.GetPath().ToUTF8();
     }
 
-    wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working..."), translate("Saving file..."), 100, this);
+    wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working"), translate("Saving file..."), 100, this);
     progDia->SetIcon(wxICON(MAINICON));
     progDia->Pulse();
     try {
-        SetStrings(filePath, stringList->internalData);
-    } catch (runtime_error& e) {
+        SetStrings(filePath, stringList->GetItems());
+    } catch (exception& e) {  //bad_alloc or runtime_error.
         progDia->Destroy();
         wxMessageBox(
             FromUTF8(e.what()),
@@ -342,7 +433,7 @@ void MainFrame::SaveFile() {
     }
     progDia->Destroy();
 
-    stringsEdited = false;
+    stringList->ResetEditedFlags();
 }
 
 void MainFrame::OnQuit(wxCommandEvent& event) {
@@ -351,7 +442,7 @@ void MainFrame::OnQuit(wxCommandEvent& event) {
 
 void MainFrame::OnClose(wxCloseEvent& event) {
     //Need to prompt save if strings have been edited.
-    if (stringsEdited) {
+    if (stringList->IsContentEdited()) {
         wxMessageDialog messDia(this, translate("Your changes have not been saved. Do you want to save them before exiting?"), translate("Save changes?"), wxCANCEL|wxYES_NO);
         messDia.SetIcon(wxICON(MAINICON));
 
@@ -406,11 +497,11 @@ void MainFrame::OnImportXML(wxCommandEvent& event) {
     if (fd.ShowModal() != wxID_OK)
         return;
 
-    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Importing strings..."), 100, this, wxPD_APP_MODAL);
+    wxProgressDialog progDia(translate("StrEdit: Working"), translate("Importing strings..."), 100, this, wxPD_APP_MODAL);
     progDia.SetIcon(wxICON(MAINICON));
     progDia.Pulse();
     try {
-        ImportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
+        stringList->SetItems(fd.GetPath());
     } catch (runtime_error& e) {
         wxMessageBox(
             FromUTF8(e.what()),
@@ -420,20 +511,9 @@ void MainFrame::OnImportXML(wxCommandEvent& event) {
         return;
     }
     progDia.Pulse();
-    sort(stringList->internalData.begin(), stringList->internalData.end(), compare_old_new);
-    size_t listSize = stringList->internalData.size();
-    stringList->SetItemCount(listSize);
-    stringList->RefreshItems(0, listSize - 1);
-    //Reset everything.
-    stringList->filter.clear();
-    stringList->currentSelectionIndex = -1;
-    searchBox->Clear();
-    originalTextBox->Clear();
-    newTextBox->Clear();
-    stringsEdited = false;
-    filePath.clear();
-    SetStatusText(wxString::Format(wxT("%i strings"), listSize));
-    SetTitle("StrEdit : " + fd.GetPath());
+    Reset();
+    UpdateStatus();
+    SetTitle("StrEdit");
 }
 
 void MainFrame::OnExportXML(wxCommandEvent& event) {
@@ -445,63 +525,39 @@ void MainFrame::OnExportXML(wxCommandEvent& event) {
     wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Exporting strings..."), 100, this, wxPD_APP_MODAL);
     progDia.SetIcon(wxICON(MAINICON));
     progDia.Pulse();
-    ExportAsXML(fd.GetPath().ToUTF8().data(), stringList->internalData);
+    ExportAsXML(fd.GetPath().ToUTF8().data(), stringList->GetItems());
 
-    stringsEdited = false;
+    stringList->ResetEditedFlags();
 }
 
 void MainFrame::OnStringSelect(wxListEvent& event) {
 
-    if (stringList->currentSelectionIndex != -1) {
+    stringList->UpdateSelectedItem(newTextBox->GetValue());
 
-        wxString currStr = stringList->internalData[stringList->currentSelectionIndex].newString;
-        wxString newStr = newTextBox->GetValue().ToUTF8();
+    stringList->SetSelectedIndex(event.GetIndex());
 
-        if (currStr != newStr) {
-            stringsEdited = true;
-            stringList->internalData[stringList->currentSelectionIndex].newString = newStr;
-            stringList->internalData[stringList->currentSelectionIndex].edited = true;
-            stringList->RefreshItems(0, stringList->GetItemCount() - 1);
-        }
-    }
-    if (stringList->filter.empty())
-        stringList->currentSelectionIndex = event.GetIndex();
-    else
-        stringList->currentSelectionIndex = stringList->filter[event.GetIndex()];
-
-    //Load the selected strings.
-    str_data data = stringList->internalData[stringList->currentSelectionIndex];
+    str_data data = stringList->GetSelectedItem();
 
     originalTextBox->SetValue(FromUTF8(data.oldString));
     newTextBox->SetValue(FromUTF8(data.newString));
+
+    UpdateStatus();
 }
 
 void MainFrame::OnStringFilter(wxCommandEvent& event) {
-    string filterStr = event.GetString().ToUTF8().data(); //For some reason it doesn't like not having data()...
-    if (filterStr.empty()) {
+    if (event.GetString().empty()) {
         OnStringFilterCancel(event);
         return;
     }
+    stringList->ApplyFilter(event.GetString());
     searchBox->ShowCancelButton(true);
-    size_t length = filterStr.length();
-    stringList->filter.clear();
-    for (size_t i=0, max=stringList->internalData.size(); i < max; ++i) {
-        if (boost::iequals(stringList->internalData[i].oldString.substr(0, length), filterStr))
-            stringList->filter.push_back(i);
-    }
-    size_t itemCount = stringList->filter.size();
-    stringList->SetItemCount(itemCount);
-    stringList->RefreshItems(0, itemCount - 1);
-    SetStatusText(wxString::Format(wxT("%i strings (%i hidden)"), stringList->internalData.size(), stringList->internalData.size() - itemCount));
+    UpdateStatus();
 }
 
 void MainFrame::OnStringFilterCancel(wxCommandEvent& event) {
+    stringList->ApplyFilter("");
     searchBox->ShowCancelButton(false);
-    stringList->filter.clear();
-    size_t itemCount = stringList->internalData.size();
-    stringList->SetItemCount(itemCount);
-    stringList->RefreshItems(0, itemCount - 1);
-    SetStatusText(wxString::Format(wxT("%i strings"), stringList->internalData.size()));
+    UpdateStatus();
 }
 
 void MainFrame::OnKeyDown(wxKeyEvent& event) {
@@ -511,6 +567,21 @@ void MainFrame::OnKeyDown(wxKeyEvent& event) {
         newTextBox->SetFocus();
     }
     event.Skip();
+}
+
+void MainFrame::Reset() {
+    searchBox->Clear();
+    originalTextBox->Clear();
+    newTextBox->Clear();
+    filePath.clear();
+    stringsEdited = false;
+}
+
+void MainFrame::UpdateStatus() {
+    SetStatusText(wxString::Format(translate("%i strings"), stringList->GetTotalItemCount()), 0);
+    SetStatusText(wxString::Format(translate("%i hidden"), stringList->GetHiddenCount()), 1);
+    SetStatusText(wxString::Format(translate("%i translated (%i%%)"), stringList->GetTranslatedCount(), int(float(stringList->GetTranslatedCount()) / stringList->GetTotalItemCount() * 100) ), 2);
+    SetStatusText(wxString::Format(translate("%i fuzzy"), stringList->GetFuzzyCount()), 3);
 }
 
 OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
@@ -610,7 +681,7 @@ VocabDialog::VocabDialog(wxWindow * parent, wxWindowID id, const wxString& title
 }
 
 void VocabDialog::OnAddPair(wxCommandEvent& event) {
-    OpenDialog * od = new OpenDialog(this, wxID_ANY, translate("Open File(s)..."));
+    OpenDialog * od = new OpenDialog(this, wxID_ANY, translate("Open File(s)"));
 
     if (od->ShowModal() != wxID_OK) {
         od->Destroy();

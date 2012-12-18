@@ -79,7 +79,7 @@
 
 <h2 id="usage">Usage</h2>
 <h3 id="usage-opening">Opening String Tables</h3>
-<p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. On launch, the <q>Open File(s)...</q> dialog, shown below, is displayed.
+<p>StrEdit is launched by running the <q>StrEdit.exe</q> found in the StrEdit folder. String files may be opened using <q>File->Open...</q> or the keyboard shortcut <kbd>Ctrl + O</kbd>. The <q>Open File(s)</q> dialog is shown below.
 <img alt="open files" src="images/open-files.png"/>
 <p>The translation file is optional, and should be used if updating an existing translation. The source file must always be specified, and if a translation file is also specified, it must be exactly the same file as was used to create the translation from.
 <p>The drop-down menus to the right of the file pickers are for selecting the fall-back encoding that should be used when reading the string tables. The string tables are assumed to contain strings encoded in UTF-8, but if a string is not valid when read as UTF-8, the fall-back encoding will be used. The encodings available for selection are:
@@ -138,6 +138,7 @@
     <li>Added the ability to export strings to an XML file, and to import them again.
     <li>Implemented real progress indication for fuzzy string matching.
     <li>Increased performance of machine translation by 10x.
+    <li>The Open File(s) dialog is no longer displayed on opening StrEdit, since there is now another method of loading strings available (XML import).
 </ul>
 <h3>v0.3 - <i>14 December 2012</i></h3>
 <ul>

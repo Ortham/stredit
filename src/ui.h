@@ -35,14 +35,14 @@
 #include <wx/listctrl.h>
 #include <wx/filepicker.h>
 #include <wx/srchctrl.h>
+#include <wx/progdlg.h>
 
 
 //UI helper functions.
 namespace stredit {
-    wxString translate(char * cstr);
-    wxString translate(std::string str);
-    wxString FromUTF8(std::string str);
-    wxString FromUTF8(boost::format f);
+    wxString translate(const std::string str);
+    wxString FromUTF8(const std::string str);
+    wxString FromUTF8(const boost::format f);
 }
 
 //wxWidgets element IDs.
@@ -66,13 +66,36 @@ public:
 
     void OnClose(wxCloseEvent& event);
 
-    std::vector<stredit::str_data> internalData;
-    std::vector<int> filter;
-    int currentSelectionIndex;
+    void SetItems(const wxString sourcePath, const int sourceEnc,
+                  const wxString transPath = "", const int transEnc = 1252);
+    void SetItems(const wxString xmlPath);
+
+    void FuzzyTranslate(const boost::unordered_map<std::string, std::string>& stringMap, wxProgressDialog * pd);
+
+    int GetTotalItemCount() const;
+    int GetHiddenCount() const;
+    int GetFuzzyCount() const;
+    int GetTranslatedCount() const;
+
+    const std::vector<stredit::str_data>& GetItems() const;
+
+    bool IsContentEdited() const;
+    void ResetEditedFlags();
+
+    void ApplyFilter(const wxString str);
+    bool IsFiltered() const;
+
+    void UpdateSelectedItem(const wxString str);
+    void SetSelectedIndex(const int i);
+    stredit::str_data GetSelectedItem() const;
 protected:
     wxString OnGetItemText(long item, long column) const;
     wxListItemAttr * OnGetItemAttr(long item) const;
     wxListItemAttr * attr;
+private:
+    std::vector<stredit::str_data> internalData;
+    std::vector<int> filter;
+    int currentSelectionIndex;
 
     DECLARE_EVENT_TABLE()
 };
@@ -99,6 +122,8 @@ public:
     void OnKeyDown(wxKeyEvent& event);
 
     void SaveFile();
+    void Reset();
+    void UpdateStatus();
 private:
     VirtualList * stringList;
     wxSearchCtrl * searchBox;  //Could be used for filtering the string list.

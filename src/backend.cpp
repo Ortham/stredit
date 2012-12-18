@@ -216,9 +216,8 @@ namespace stredit {
             data.id = it->first;
             data.oldString = it->second;
             itr = targetStrMap.find(it->first);
-            if (itr != targetStrMap.end() && it->second != itr->second) {
+            if (itr != targetStrMap.end() && it->second != itr->second)
                 data.newString = itr->second;
-            }
             stringList.push_back(data);
         }
     }
