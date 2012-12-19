@@ -96,7 +96,7 @@
     <thead>
         <tr><th>Element<th>Description
     <tbody>
-        <tr><td>Filter Box<td>This box can be used to filter the list of strings. Entering text into this box then pressing <q>Enter</q> or clicking the magnifying glass icon will filter out any rows in the String List that do not have original strings that start with the same text. Clicking the cancel icon or clearing the text then pressing enter or clicking the magnifying glass icon will remove the filter. The status bar will give a count of how many strings are being filtered when a filter is applied.
+        <tr><td>Filter Box<td>This box can be used to filter the list of strings. Entering text into this box then pressing <q>Enter</q> or clicking the magnifying glass icon will filter out any rows in the String List that do not have original strings that contain the same text (case-insensitive). Clicking the cancel icon or clearing the text then pressing enter or clicking the magnifying glass icon will remove the filter. The status bar will give a count of how many strings are being filtered when a filter is applied.
         <tr><td>String List<td>This is the list of all the strings in the loaded source string table. Clicking on a row will put its original and new strings into their respective boxes. For rows that contain an original and new string that were matched inexactly, the <q>Fuzzy</q> column will be ticked. Rows which have had their new string edited are highlighted in blue.
         <tr><td>Original String Box<td>Displays the text in the <q>Original String</q> column of the selected row. This text is non-editable.
         <tr><td>New String Box<td>When a row is selected, this box is filled with the text in its <q>New String</q> column. Any edits made are applied to that row when another row is selected.
@@ -133,12 +133,17 @@
 <p>StrEdit is copyright &copy; 2012 WrinklyNinja, and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License v3.0</a>, the full text of which is found in the included <q>LICENSE</q> file.
 
 <h2 id="history">Version History</h2>
-<h3>v0.3.1 - <i>December 2012</i></h3>
+<h3>v0.4 - <i>December 2012</i></h3>
 <ul>
     <li>Added the ability to export strings to an XML file, and to import them again.
     <li>Implemented real progress indication for fuzzy string matching.
     <li>Increased performance of machine translation by 10x.
     <li>The Open File(s) dialog is no longer displayed on opening StrEdit, since there is now another method of loading strings available (XML import).
+    <li>The status bar now holds the total number of strings loaded, the number hidden by the filter, the number and percentage of strings translated and the number of fuzzy matches made.
+    <li>Editing a fuzzy-matched string now removes its fuzzy flag.
+    <li>Fixed a few UI inconsistencies encountered during code cleanup.
+    <li>String filtering now performs a case-insensitive search of the full contents of the original strings, rather than a case-insensitive comparison with the beginning of the original strings.
+    <li>Saving your edits now also applied and saves your current edit, so that string tables with only one entry can be edited (which was not possible previously as to apply an edit a new row had to be selected, of which there is none).
 </ul>
 <h3>v0.3 - <i>14 December 2012</i></h3>
 <ul>

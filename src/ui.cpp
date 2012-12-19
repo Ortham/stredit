@@ -227,8 +227,8 @@ void VirtualList::ApplyFilter(const wxString str) {
     size_t itemCount = 0;
     if (!str.empty()) {
         string filterStr = str.ToUTF8().data();
-        for (size_t i=0, max=internalData.size(), length=filterStr.length(); i < max; ++i) {
-            if (boost::iequals(internalData[i].oldString.substr(0, length), filterStr))
+        for (size_t i=0, max=internalData.size(); i < max; ++i) {
+            if (boost::icontains(internalData[i].oldString, filterStr))
                 filter.push_back(i);
         }
         itemCount = filter.size();
@@ -252,6 +252,7 @@ void VirtualList::UpdateSelectedItem(const wxString str) {
         if (internalData[currentSelectionIndex].newString != newStr) {
             internalData[currentSelectionIndex].newString = newStr;
             internalData[currentSelectionIndex].edited = true;
+            internalData[currentSelectionIndex].fuzzy = false;
             RefreshItem(currentSelectionIndex);
         }
     }
@@ -369,6 +370,9 @@ void MainFrame::OnOpenFile(wxCommandEvent& event) {
 }
 
 void MainFrame::OnSaveFile(wxCommandEvent& event) {
+    //First apply the current edit if there is one.
+    stringList->UpdateSelectedItem(newTextBox->GetValue());
+
     if (event.GetId() == wxID_SAVEAS)
         filePath.clear();
 
