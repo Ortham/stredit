@@ -85,6 +85,10 @@ namespace stredit {
 
 //Draws the main window when program starts.
 bool StrEditApp::OnInit() {
+    //Set up locale stuff.
+    boost::locale::generator gen;
+    locale::global(gen(""));
+
     //Initialise main window.
     MainFrame *frame = new MainFrame(wxT("StrEdit"));
     frame->Show(true);
@@ -226,9 +230,9 @@ void VirtualList::ApplyFilter(const wxString str) {
     filter.clear();
     size_t itemCount = 0;
     if (!str.empty()) {
-        string filterStr = str.ToUTF8().data();
+        string filterStr = boost::locale::fold_case(str.ToUTF8().data());
         for (size_t i=0, max=internalData.size(); i < max; ++i) {
-            if (boost::icontains(internalData[i].oldString, filterStr))
+            if (boost::contains(boost::locale::fold_case(internalData[i].oldString), filterStr))
                 filter.push_back(i);
         }
         itemCount = filter.size();
@@ -380,7 +384,7 @@ void MainFrame::OnSaveFile(wxCommandEvent& event) {
 }
 
 void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
-    VocabDialog vd(this, wxID_ANY, "Select vocabulary files for machine translation.");
+    VocabDialog vd(this, wxID_ANY, translate("Select vocabulary files for machine translation."));
 
     if (vd.ShowModal() != wxID_OK)
         return;
@@ -401,7 +405,7 @@ void MainFrame::OnMachineTranslate(wxCommandEvent& event) {
     }
 
     //Now fuzzy match to string list.
-    progDia.Update(0, "Translating strings...");
+    progDia.Update(0, translate("Translating strings..."));
     stringList->FuzzyTranslate(stringMap, &progDia);
     UpdateStatus();
 }
@@ -421,13 +425,12 @@ void MainFrame::SaveFile() {
         filePath = saveFileDialog.GetPath().ToUTF8();
     }
 
-    wxProgressDialog * progDia = new wxProgressDialog(translate("StrEdit: Working"), translate("Saving file..."), 100, this);
-    progDia->SetIcon(wxICON(MAINICON));
-    progDia->Pulse();
+    wxProgressDialog progDia(translate("StrEdit: Working"), translate("Saving file..."), 100, this);
+    progDia.SetIcon(wxICON(MAINICON));
+    progDia.Pulse();
     try {
         SetStrings(filePath, stringList->GetItems());
     } catch (exception& e) {  //bad_alloc or runtime_error.
-        progDia->Destroy();
         wxMessageBox(
             FromUTF8(e.what()),
             translate("StrEdit: Error"),
@@ -435,7 +438,6 @@ void MainFrame::SaveFile() {
             this);
         return;
     }
-    progDia->Destroy();
 
     stringList->ResetEditedFlags();
 }
@@ -526,7 +528,7 @@ void MainFrame::OnExportXML(wxCommandEvent& event) {
     if (fd.ShowModal() != wxID_OK)
         return;
 
-    wxProgressDialog progDia(translate("StrEdit: Working..."), translate("Exporting strings..."), 100, this, wxPD_APP_MODAL);
+    wxProgressDialog progDia(translate("StrEdit: Working"), translate("Exporting strings..."), 100, this, wxPD_APP_MODAL);
     progDia.SetIcon(wxICON(MAINICON));
     progDia.Pulse();
     ExportAsXML(fd.GetPath().ToUTF8().data(), stringList->GetItems());
