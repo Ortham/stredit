@@ -593,6 +593,7 @@ void MainFrame::UpdateStatus() {
 OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title) {
 
     wxString encs[] = {
+      "Windows-1250",
       "Windows-1251",
       "Windows-1252"
     };
@@ -609,8 +610,8 @@ OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) 
     srcPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
     transPicker = new wxFilePickerCtrl(this, wxID_ANY, wxEmptyString, wxFileSelectorPromptStr, "Strings files (*.STRINGS;*.DLSTRINGS;*.ILSTRINGS)|*.STRINGS;*.DLSTRINGS;*.ILSTRINGS");
 
-    srcFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 2, encs);
-    transFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 2, encs);
+    srcFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 3, encs);
+    transFallbackEncChoice = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 3, encs);
 
     srcBox->Add(new wxStaticText(this, wxID_ANY, translate("Source file")), 1, wxEXPAND|wxLEFT|wxALL, 5);
     srcBox->Add(srcPicker, 0, wxCENTER|wxALL, 5);
@@ -628,8 +629,8 @@ OpenDialog::OpenDialog(wxWindow * parent, wxWindowID id, const wxString& title) 
     SetSizerAndFit(bigBox);
 
     //Set default fallback encodings.
-    srcFallbackEncChoice->SetSelection(1);
-    transFallbackEncChoice->SetSelection(1);
+    srcFallbackEncChoice->SetSelection(2);
+    transFallbackEncChoice->SetSelection(2);
 }
 
 wxString OpenDialog::GetSourcePath() const {
@@ -645,7 +646,7 @@ int OpenDialog::GetSourceFallbackEnc() const {
     if (ret == wxNOT_FOUND)
         return ret;
     else
-        return 1251 + ret;
+        return 1250 + ret;
 }
 
 int OpenDialog::GetTransFallbackEnc() const {
@@ -653,7 +654,7 @@ int OpenDialog::GetTransFallbackEnc() const {
     if (ret == wxNOT_FOUND)
         return ret;
     else
-        return 1251 + ret;
+        return 1250 + ret;
 }
 
 VocabDialog::VocabDialog(wxWindow * parent, wxWindowID id, const wxString& title) : wxDialog(parent, id, title, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER) {
